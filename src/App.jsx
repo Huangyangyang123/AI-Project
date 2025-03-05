@@ -1,6 +1,8 @@
 import { useState } from 'react'
 
-import './App.css'
+import { Button } from 'antd';
+
+import './App.less'
 
 function App() {
   const [count, setCount] = useState(0)
@@ -9,6 +11,8 @@ function App() {
     <>
       <div>
         AI project init...
+
+        <Button type="primary">Button Test</Button>
       </div>
     </>
   )
