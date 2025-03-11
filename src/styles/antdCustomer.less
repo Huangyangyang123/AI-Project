@@ -1,0 +1,25 @@
+@import 'antd/lib/style/index.less';
+@import './antdComponentVars.less';
+@import './antdComponents.less';
+
+.ant-upload-text {
+  font-size: 14px !important;
+}
+.ant-upload-hint {
+  font-size: 12px !important;
+}
+.ant-upload-drag-icon {
+  > span.anticon {
+    font-size: 30px !important;
+  }
+}
+.ant-input-group-addon:has(+ .ant-input-affix-wrapper-borderless) {
+  border: 0;
+  background: none;
+}
+.ant-input-number-group-wrapper {
+  .ant-input-number-borderless + .ant-input-number-group-addon {
+    border: 0;
+    background: none;
+  }
+}
