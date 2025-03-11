@@ -1,0 +1,11 @@
+node_modules
+.DS_Store
+dist
+
+#local env files
+.history
+.vscode
+debug.log
+
+#不提交快照文件
+*.snap

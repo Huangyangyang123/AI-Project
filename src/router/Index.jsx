@@ -1,0 +1,8 @@
+import React from "react";
+import RouterFromJson from './RouterFromJson'
+import { routes } from './makeRoutes'
+import Progress from './Progress'
+
+const AppRouter = ()=><RouterFromJson routes={routes} fallback={Progress} />
+
+return AppRouter
