@@ -88,7 +88,7 @@ const treeToFlat = (tree=[],childrenKey='children')=>{
   let stack = [{ [childrenKey]: tree }]
   let flat = []
   while (stack.length) {
-    const item = stack.pop() as T
+    const item = stack.pop()
     const children = item[childrenKey] || []
     flat.push(item)
     for (let i = children.length - 1; i >= 0; i--) {

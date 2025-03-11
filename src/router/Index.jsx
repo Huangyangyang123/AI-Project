@@ -5,4 +5,4 @@ import Progress from './Progress'
 
 const AppRouter = ()=><RouterFromJson routes={routes} fallback={Progress} />
 
-return AppRouter
+export default AppRouter

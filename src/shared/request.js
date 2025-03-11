@@ -89,7 +89,7 @@ request.use(async (ctx,next)=>{
     } else {
         errorData = data
     }
-    const { message, retCode, data: dataValue } = errorData as ResponseType
+    const { message, retCode, data: dataValue } = errorData
     const { dataLevel = 'pure', skipErrorMessage = false } = req.options
     if (retCode !== 10000) {
         const error = new Error(message || errorMessage)
