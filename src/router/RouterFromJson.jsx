@@ -18,19 +18,21 @@ const Nest = ({ path = '', routes = [], fullPath, component: Component, fallback
 
 const RouterFromJson = ({ fallback, routes = [] })=>(
     <ErrorBoundary>
-    <Suspense fallback={fallback}>
-      <Switch>
-        <Redirect exact from='/' to='/main' />
-        {routes.map((route) => {
-          return route.routes ? (
-            <Nest key={route.path} fallback={fallback} {...route} />
-          ) : (
-            <Route exact key={route.path} path={route.path} component={route.component} />
-          )
-        })}
-      </Switch>
-    </Suspense>
-  </ErrorBoundary>
+        <Suspense fallback={fallback}>
+            <Switch>
+                <Redirect exact from='/' to='/main' />
+                {
+                    routes.map((route) => {
+                        return route.routes ? (
+                            <Nest key={route.path} fallback={fallback} {...route} />
+                        ) : (
+                            <Route exact key={route.path} path={route.path} component={route.component} />
+                        )
+                    }
+                )}
+            </Switch>
+        </Suspense>
+    </ErrorBoundary>
 )
 
 export default RouterFromJson
