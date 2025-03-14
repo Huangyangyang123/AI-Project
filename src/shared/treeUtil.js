@@ -44,14 +44,14 @@ const getNodePathFromTree = (id,tree=[],idKey='id',childrenKey='children')=>{
 const getNodeFromTree = (id,tree=[],idKey='id',childrenKey='children')=>{
     let stack = [{ [childrenKey]: tree, [idKey]: Symbol('uniqueId') }]
     while (stack.length) {
-        const item = stack.pop()
-        if (item[idKey] === id) {
-        return item
-        }
-        const children = item[childrenKey] || []
-        for (let i = children.length - 1; i >= 0; i--) {
+      const item = stack.pop()
+      if (item[idKey] === id) {
+      return item
+      }
+      const children = item[childrenKey] || []
+      for (let i = children.length - 1; i >= 0; i--) {
         stack.push(children[i])
-        }
+      }
     }
     return null
 }

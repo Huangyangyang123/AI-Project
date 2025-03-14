@@ -139,4 +139,9 @@ export async function logout() {
   })
 }
 
+export const toPath = (path='/')=>{
+  location.hash = `#${path}`
+}
+
+
 export {downloadFileFromBlob, getType, filterEmpty, getEnv}

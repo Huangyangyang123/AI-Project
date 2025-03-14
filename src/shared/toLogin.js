@@ -3,7 +3,7 @@ export const toLogin = (to = '', env = getEnv()) => {
   if (import.meta.env.DEV) env = 'localhost'
   /** 登录地址 */
   let path = {
-    localhost: 'http://localhost:8087/#/login',
+    localhost: 'http://localhost:3000/#/login',
     // dev: 'https://mobileapp-uds-frontend-dev.pinnacle-mobileapp.dev.ali.cloud.cn.hsbc/#/login',
     // sit: 'https://mobileapp-uds-frontend-sit.pinnacle-mobileapp.dev.ali.cloud.cn.hsbc/#/login',
     // oat: 'https://mobileapp-uds-frontend-oat.pinnacle-mobileapp.dev.ali.cloud.cn.hsbc/#/login',
