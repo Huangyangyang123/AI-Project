@@ -50,7 +50,7 @@ const getStorage = (name) => {
 function getItem(label,key,icon,children) {
     return {
       key,
-      icon: undefined, // 隐藏菜单图标
+      icon,//: undefined, // 隐藏菜单图标
       children,
       label,
     }
@@ -79,6 +79,7 @@ function getItem(label,key,icon,children) {
 
   const menuWithKey = genMenuKey(await menu())
 
+
   const items = (menuWithKey) => {
     return menuWithKey.map((i) => {
       return getItem(i.name, i.key || '', i.icon || '', i.children && items(i.children))
@@ -88,6 +89,7 @@ function getItem(label,key,icon,children) {
   const MENU_ITEMS = items(menuWithKey)
 
   const SideMenu = (menuProps) => {
+    console.log('menuProps++',menuProps)
     return (
       <Menu
         {...menuProps}
@@ -159,7 +161,10 @@ function getItem(label,key,icon,children) {
   const Aside = observer((props)=>{
     const [searchText, setSearchText] = useState('')
     const [menuItems, setMenuItems] = useState(MENU_ITEMS)
+
+    console.log('menuItems:44',menuItems)
     const [openKeys, setOpenKeys] = useState([])
+
 
     function onSearchTextChange(ev) {
         const text = ev.target.value
