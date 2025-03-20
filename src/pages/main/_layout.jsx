@@ -186,7 +186,7 @@ function getItem(label,key,icon,children) {
         width={240}>
         <div className='sider-top'>
             < img />
-            <span>汇丰金科</span>
+            <span>AI Assistant管理系统</span>
         </div>
         <div className='sider-menu-search'>
             <Input
@@ -307,7 +307,8 @@ export default function MainLayout(props){
         </Header>
         <Content>
           <PageLocation currentMenu={currentMenu} />
-          <div className='layout-main'>{ready && props.children}</div>
+          {console.log('props:',props.children)}
+          <div className='layout-main'>{props.children}</div>
         </Content>
       </Layout>
     </Layout>

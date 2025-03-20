@@ -1,4 +1,6 @@
-const REQUEST_PREFIX = `${import.meta.env.VITEST ? location : '/'}api/uds`
+console.log('VITEST',import.meta.env.VITEST)
+
+const REQUEST_PREFIX = `${import.meta.env.VITEST ? location : '/'}api`
 
 const PORTAL_API = ['/adgroup/ssoAuth/logout']
 

@@ -1,7 +1,19 @@
 import React,{useEffect} from "react";
 
-export default function doMain(){
+import { get } from '@/shared/request'
+
+export default function DoMain(){
+
+    useEffect(()=>{
+        initdatas()
+    },[])
+
+    const initdatas = async()=>{
+        const res = await get('/workgroups')
+        console.log('res:',res)
+    }
+
     return (
-        <div>test page...</div>
+        <div>test page...666</div>
     )
 }

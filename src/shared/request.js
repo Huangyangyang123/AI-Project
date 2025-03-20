@@ -77,7 +77,9 @@ request.use(async (ctx,next)=>{
       }
     await next()
     const { req, res } = ctx
+
     const { data, response } = res
+
     const cd = getContentDispositionInfo(response.headers)
     if ('attachment' in cd) {
         return downloadFileFromBlob(data, cd.filename)
@@ -89,16 +91,19 @@ request.use(async (ctx,next)=>{
     } else {
         errorData = data
     }
+
+
     const { message, retCode, data: dataValue } = errorData
+    
     const { dataLevel = 'pure', skipErrorMessage = false } = req.options
-    if (retCode !== 10000) {
-        const error = new Error(message || errorMessage)
-        error.name = 'CustomerError'
-        if (!skipErrorMessage) {
-        throw error
-        }
-    }
-    ctx.res = dataLevel !== 'pure' ? data : dataValue
+    // if (retCode !== 10000) {
+    //     const error = new Error(message || errorMessage)
+    //     error.name = 'CustomerError'
+    //     if (!skipErrorMessage) {
+    //     throw error
+    //     }
+    // }
+    ctx.res = dataLevel !== 'pure' ? res : data
 })
 
 // 中间件，统一过滤空字段

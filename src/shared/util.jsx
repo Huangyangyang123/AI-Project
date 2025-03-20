@@ -1,6 +1,5 @@
 import { runInAction } from 'mobx'
 import { post } from './request'
-import { REQUEST_PREFIX } from './constant'
 import { globalStore } from '@/store/global'
 import dayjs from 'dayjs'
 import React, { useEffect } from 'react'

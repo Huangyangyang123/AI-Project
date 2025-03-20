@@ -21,11 +21,17 @@ export default defineConfig({
     open:true,
     proxy:{
       '/api':{
-        target:'',
+        target:'http://120.26.248.174:8000',
         changeOrigin:true,
         secure:false,
-        rewrite:(path)=>path.replace(/^\/api/,'')
-      },
+        // rewrite:(path)=>path.replace(/^\/api/,'')
+      }
+
+      // '/api/uds':{
+      //   target:'120.26.248.174:8000',
+      //   changeOrigin:true,
+      //   rewrite:(path)=>path.replace(/^\/api\/uds/,'')
+      // },
     },
 
   },
