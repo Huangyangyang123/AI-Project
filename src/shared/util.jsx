@@ -30,6 +30,12 @@ const downloadFileFromBlob = (data, filename = '')=>{
 const getType = (data)=>{
     return Object.prototype.toString.call(data).slice(8, -1).toLowerCase()
 }
+// 是否为空
+const isEmpty = (val)=>{
+  const emptys = [null,undefined,'undefined','null','',NaN,'NaN']
+  return emptys.includes(val)
+} 
+
 /**
  * 过滤掉空字段
  * @param {any} data 

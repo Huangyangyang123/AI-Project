@@ -89,7 +89,6 @@ function getItem(label,key,icon,children) {
   const MENU_ITEMS = items(menuWithKey)
 
   const SideMenu = (menuProps) => {
-    console.log('menuProps++',menuProps)
     return (
       <Menu
         {...menuProps}
@@ -162,7 +161,6 @@ function getItem(label,key,icon,children) {
     const [searchText, setSearchText] = useState('')
     const [menuItems, setMenuItems] = useState(MENU_ITEMS)
 
-    console.log('menuItems:44',menuItems)
     const [openKeys, setOpenKeys] = useState([])
 
 
@@ -312,7 +310,6 @@ export default function MainLayout(props){
         </Header>
         <Content>
           <PageLocation currentMenu={currentMenu} />
-          {console.log('props:',props.children)}
           <div className='layout-main'>{props.children}</div>
         </Content>
       </Layout>
