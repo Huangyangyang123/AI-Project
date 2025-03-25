@@ -2,6 +2,7 @@ import React,{useEffect,useState} from "react";
 import { get, post } from '@/shared/request'
 import { PlusOutlined, SearchOutlined, InfoCircleOutlined, DownOutlined } from '@ant-design/icons';
 import { Button, Input, Table, Modal, Radio, Checkbox, Col, Form, Row, Select } from 'antd';
+import TableHeader from '@/components/tableHeader'
 import './index.less'
 import dayjs from "dayjs";
 
@@ -65,7 +66,6 @@ export default function DoMain(){
     const initdatas = async()=>{
         const res = await get('/v1/workgroups/list')
         const tableChildrenDatas = await get('/v1/workspaces/list')
-        // setTableChildren(tableChildrenDatas)
         
         const expendDatas = [...res].filter((item)=>{
             item.arr = [...tableChildrenDatas].filter((arr)=>{
@@ -202,8 +202,17 @@ export default function DoMain(){
         showModal()
     }
 
-    const handleDelOk = ()=>{
+    const handleDelOk = async()=>{
+        let url
+        let params
+        if(delRow.group_id == 1){
+            url = `/v1/workspaces/delete?workspace_id=${delRow.id}`
+        }else{  
+            url = `/v1/workgroups/delete?group_id=${delRow.id}`
+        }
+        await post(url)
         setIsDelModalOpen(false)
+        initdatas()
     }
     
     const handleDelCancel = ()=>{
@@ -301,22 +310,22 @@ export default function DoMain(){
         if(row.arr && row.arr.length > 0){
             return <Table rowKey='id' columns={columns} dataSource={row.arr} pagination={false} />
         }
-}
+    }
+
+    const tableHeaderParams = {
+        handleCreat:handleCreat,
+        handleBlur:handleBlur,
+        inputValue:inputValue,
+        Icon:PlusOutlined,
+        SearchOutlined:SearchOutlined,
+        placeholder:'请输入名称或描述',
+        btnText:'新建'
+    }
 
 
     return (
         <div className="workgroups-page">
-            <div className="workgroups-header">
-                <Button icon={<PlusOutlined />} type="primary" onClick={({})=>handleCreat({name:'',description:''})}>新建</Button>
-                <Input 
-                    className="search-input"
-                    allowClear 
-                    placeholder="请输入名称或描述" 
-                    onBlur={handleBlur} 
-                    value={inputValue}
-                    suffix={<SearchOutlined />}
-                />
-            </div>
+            {TableHeader(tableHeaderParams)}
             {/* 嵌套table */}
             <Table
                 columns={columns}

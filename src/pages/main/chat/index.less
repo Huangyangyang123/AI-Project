@@ -1,0 +1,144 @@
+.chat-page{
+    border-radius: 8px;
+    font-family: PingFang SC;
+    .ant-row{
+        .left{
+            background: #fcf8f8;
+            border: 1px solid #f0e2e2;
+            .history-list{
+                padding: 10px;
+                .height-52{
+                    display: flex;
+                    justify-content: flex-start;
+                    align-items: center;
+                    height: 52px;
+                    font-weight: 400;
+                    font-size: 16px;
+                    color: #3b1e1e;
+                }
+                .active{
+                    border-right: 4px solid #c30d23;
+                }
+                .title{
+                    justify-content: space-between;
+                    .date{
+                        font-weight: 600;
+                        font-size: 14px;
+                        color: #3b1e1e;
+                    }
+                    .date{
+                        font-family: Plus Jakarta Sans;
+                        font-weight: 500;
+                        font-size: 14px;
+                        color: #694747;
+                    }
+                }
+            }
+        }
+        .right{
+            .contet{
+                max-height: 700px;
+                height: 600px;
+                overflow-y:scroll;
+                overflow-x: hidden;
+                padding: 10px;
+                .left-align{
+                    display: flex;
+                    justify-content: flex-start;
+                    .avtar{
+                        border-radius: 50%;
+                        background: #ffeeee;
+                        width: 40px;
+                        height: 40px;
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                    }
+                }
+                .right-align{
+                    padding: 10px;
+                    margin: 10px 0;
+                    flex-direction: column;
+                    display: flex;
+                    align-items: end;
+                    .text{
+                        color: #694747;
+                        font-weight: 400;
+                        font-size: 16px;
+                        background-color: #fcf8f8;
+                        width: 30%;
+                        height: 48px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-around;
+                        border-radius: 4px;
+                    }
+                    .icon{
+                        margin-top: 10px;
+                        span{
+                            margin: 0 10px;
+                        }
+                    }
+                }
+                .dailog-content{
+                    margin-left: 10px;
+                    .dailog-title{
+                        font-weight: 500;
+                        font-size: 16px;
+                        color: #3b1e1e;
+                    }
+                    .dailog-text{
+                        background-color: #fcf8f8;
+                        border-radius: 8px;
+                        padding: 10px;
+                        font-weight: 400;
+                        font-size: 16px;
+                        color: #694747;
+                        margin-top: 10px;
+                    }
+                }
+            }
+            .footer{
+                border: 1px solid #e1cbcb;
+                border-radius: 8px;
+                box-shadow: 0px 2px 4px -2px #171717;
+                margin: 10px;
+                position: relative;
+                .text{
+                    margin: 10px;
+                    border: 1px solid #e1cbcb;
+                    border-radius: 4px;
+                    padding: 10px;
+                    font-size: 14px;
+                    font-weight: 400;
+                    color: #3b1e1e;
+                    position: relative;
+                    span{
+                        position: absolute;
+                        right: -7px;
+                        top: -7px;
+                        background: #e1cbcb;
+                        border-radius: 50%;
+                    }
+                    .quote-content{
+                        color: #b89494;
+                    }
+                }
+                .input-box{
+                    border-top: 1px solid #f0e2e2;
+                    padding: 10px;
+                    margin: 0 10px;
+                    width: 97%;
+                    resize: none;
+                }
+                .send{
+                    position: absolute;
+                    bottom: 5px;
+                    right: 5px;
+                    color: #c30d23;
+                    font-size: 16px;
+                }
+            }
+        }
+    }
+}
