@@ -30,7 +30,7 @@ const getContentDispositionInfo = (headers) => {
 
 const request = extend({
     prefix: REQUEST_PREFIX,
-    timeout: 10 * 1000,
+    timeout: 60 * 1000,
     getResponse: true,
     errorHandler: (error) => {
       const { response, name } = error

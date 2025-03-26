@@ -253,7 +253,7 @@ export default function DoMain(){
         {
             title: '创建时间',
             // dataIndex: 'created_at',
-            key: 'id',
+            key: 'created_at',
             render:(row) =>{
                 return row['created_at'] ? dayjs(row['created_at']).format('YYYY-MM-DD HH:mm:ss') : ''
             }
@@ -304,7 +304,19 @@ export default function DoMain(){
                 render:(row) =>{
                     return row['updated_at'] ? dayjs(row['updated_at']).format('YYYY-MM-DD HH:mm:ss') : ''
                 }
+            },
+            {
+                title: '操作',
+                dataIndex: '',
+                key: 'x',
+                render: (row)=>(
+                    <>
+                        <a className="opration_edit" onClick={()=>handleEdit(row)}>编辑</a>
+                        <a onClick={()=>delModel(row)}>删除</a>
+                    </>
+                )
             }
+            
         ]
 
         if(row.arr && row.arr.length > 0){

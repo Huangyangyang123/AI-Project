@@ -1,8 +1,9 @@
 import React,{useState,useEffect} from 'react'
 import TableHeader from '@/components/tableHeader'
 import { get, post } from '@/shared/request'
-import { SearchOutlined, UploadOutlined, InboxOutlined } from '@ant-design/icons';
-import { Table, Modal, Select, Form, message, Upload, TreeSelect } from 'antd';
+import { SearchOutlined, UploadOutlined, InboxOutlined, FilePdfOutlined, SmileOutlined } from '@ant-design/icons';
+import { Table, Modal, Select, Form, message, Upload, TreeSelect, Popconfirm } from 'antd';
+import dayjs from "dayjs";
 import './index.less' 
 
 const { Option } = Select;
@@ -73,6 +74,7 @@ export default function DocumentMangement(){
 
     const [modalTitle,setModalTitle] = useState('上传文档')
     const [isModalOpen,setIsModalOpen] = useState(false)
+    const [opration,setOpration] = useState('')
 
     const [form] = Form.useForm();
 
@@ -87,37 +89,93 @@ export default function DocumentMangement(){
         console.log('blur',e.target.value)
     }
 
-    useEffect(()=>{
-        initTableDatas()
+    useEffect(async()=>{
+        await initTableDatas()
+        const datas = await get(`/v1/workgroups-with-workspaces`)
+        console.log('datas==',datas)
     },[])
 
     const initTableDatas = async()=>{
         const res = await get('/v1/documents/list')
-        setTableInitList([])
+        console.log('res:',res)
+        setTableInitList(res)
     }
 
     const columns = [
         {
             title:'文档名',
             dataIndex:'name',
-            key:'name'
+            key:'name',
+            render:(row)=>{
+                return (
+                    <div>
+                        <FilePdfOutlined style={{color:'#f54a45',fontSize:'14px'}}  />
+                        <span style={{marginLeft:'5px'}}>{row}</span>
+                    </div>
+                )
+            }
         },
         {
             title:'文档大小',
-            dataIndex:'name',
-            key:'name'
+            dataIndex:'size',
+            key:'size'
         },
         {
             title:'上传者',
-
+            dataIndex:'creator',
+            key:'creator',
+            render:(row)=>{
+                return (
+                    <div style={{display:'flex',alignItems:'center'}}>
+                        <SmileOutlined style={{fontSize:'22px'}}  />
+                        <span style={{marginLeft:'5px'}}>{row}</span>
+                    </div>
+                )
+            }
         },
         {
             title:'上传时间',
-            dataIndex:'created_at'
+            dataIndex:'created_at',
+            key:'created_at',
+            render:(row) =>{
+                return row ? dayjs(row).format('YYYY-MM-DD HH:mm:ss') : ''
+            }
+        },
+        {
+            title:'操作',
+            render:(row)=>(
+                <>
+                    <a className="opration" onClick={()=>handleOprator(row,'link')}>关联</a>
+                    <a className="opration del" onClick={()=>handleOprator(row,'download')}>下载</a>
+                    <Popconfirm
+                        title="确认删除吗？"
+                        okText='确认'
+                        cancelText='取消'
+                        onConfirm={()=>delDocument(row)}
+                    > 
+                        <a>删除</a>
+                    </Popconfirm>
+                </>
+            )
+
         }
     ]
 
-    const tableData = []
+    const handleOprator = (row,type)=>{
+        console.log('这是啥==',row,type)
+        setOpration(type)
+        if(type == 'link'){
+            setIsModalOpen(true)
+        }else{
+            get(`/v1/documents/download/?document_id=${row.id}`)
+        }
+    }
+
+    const delDocument = (row)=>{
+        console.log('rowdata',row)
+        post(`/v1/documents/delete?document_id=${row.id}`)
+        initTableDatas()
+    }
 
     const tableHeaderParams = {
         handleCreat:handleCreat,
@@ -146,17 +204,15 @@ export default function DocumentMangement(){
     const props = {
         name: 'file',
         multiple: true,
-        action: 'https://www.mocky.io/v2/5cc8019d300000980a055e76',
-        onChange(info) {
-          const { status } = info.file;
-          if (status !== 'uploading') {
-            console.log(info.file, info.fileList);
-          }
-          if (status === 'done') {
-            message.success(`${info.file.name} file uploaded successfully.`);
-          } else if (status === 'error') {
-            message.error(`${info.file.name} file upload failed.`);
-          }
+        action:'/v1/documents/upload',
+        beforeUpload(file, fileList){
+            console.log('file', file)
+            const fd = new FormData()
+            fd.append('file',file)
+            console.log('fd===',fd,file)
+            post('/v1/documents/upload',fd)
+            message.success('上传成功')
+            return false
         },
         onDrop(e) {
           console.log('Dropped files', e.dataTransfer.files);
@@ -198,23 +254,26 @@ export default function DocumentMangement(){
                     onFinish={onFinish}
                     scrollToFirstError
                 >
-                    <Form.Item 
-                        name="file"
-                        label="选择文档"
-                        rules={[{required: true}
-                        ]}
-                    >
-                        <Dragger {...props}>
-                            <p className="ant-upload-drag-icon">
-                            <InboxOutlined />
-                            </p>
-                            <p className="ant-upload-text">Click or drag file to this area to upload</p>
-                            <p className="ant-upload-hint">
-                            Support for a single or bulk upload. Strictly prohibit from uploading company data or other
-                            band files
-                            </p>
-                        </Dragger>
-                    </Form.Item>
+                    {
+                        opration != 'link' && 
+                        <Form.Item 
+                            name="file"
+                            label="选择文档"
+                            rules={[{required: true}
+                            ]}
+                        >
+                            <Dragger {...props}>
+                                <p className="ant-upload-drag-icon">
+                                <InboxOutlined />
+                                </p>
+                                <p className="ant-upload-text">Click or drag file to this area to upload</p>
+                                <p className="ant-upload-hint">
+                                Support for a single or bulk upload. Strictly prohibit from uploading company data or other
+                                band files
+                                </p>
+                            </Dragger>
+                        </Form.Item> || null
+                    }
                     <Form.Item 
                         name="workspace_ids"
                         label="关联空间"
@@ -233,7 +292,7 @@ export default function DocumentMangement(){
             <Table 
                 columns={columns}
                 rowKey='id'
-                dataSource={tableData}
+                dataSource={tableInitList}
             />
             {eleModel()}
         </div>
