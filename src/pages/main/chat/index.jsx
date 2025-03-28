@@ -1,68 +1,164 @@
-import React, { use, useEffect, useState } from "react";
-import { Col, Row, Input } from 'antd';
+import React, { useEffect, useState } from "react";
+import { Input, Switch, Select } from 'antd';
 import { get, post } from '@/shared/request'
-import { SendOutlined, CustomerServiceOutlined, CopyOutlined, EditOutlined, CloseCircleOutlined } from '@ant-design/icons'
+import { SendOutlined, CustomerServiceOutlined, CopyOutlined, EditOutlined, MenuUnfoldOutlined, CloseOutlined } from '@ant-design/icons'
 import './index.less'
 
 const { TextArea } = Input;
 
-const datas = [
-    {
-        text:'对话总结对话总结',
-        id:1,
-        active:true
-    },
-    {
-        text:'反洗钱和KYC要求',
-        id:2,
-        active:false
-    }
-]
+let initContent = []
+let initRightContent = []
 
-
-const content = []
-const rightContent = []
-
-const contentNum = []
+let contentNum = []
 
 export default function Chat(){
 
-    const [dailogDatas,setDailogDatas] = useState(datas)
+    const [dailogDatas,setDailogDatas] = useState()
     const [value,setValue] = useState('')
 
-    const [content,setContent] = useState([])
-    const [rightContent,setRightContent] = useState([])
+    const [content,setContent] = useState(initContent)
+    const [rightContent,setRightContent] = useState(initRightContent)
 
     const [leftDatas,setLeftDatas] = useState([])
 
     const [nums,setNums] = useState([])
+
+    const [spaceoptions,setSpaceoptions] = useState([])  
+    const [defaultValue,setDefaultValue] = useState('')    
+
+    const [useRag,setUseRag] = useState(true)
+    const [workspaceId,setWorkspaceId] = useState()
+
+    const [citations,setCitations] = useState([])
+
+    const [documents,setDocuments] = useState([])
+
+    const [sourcesText,setSourcesText] = useState('')
 
 
     useEffect(()=>{
         initList()
     },[])
 
-    const initList = async()=>{
+    const initList = async(type = 'init')=>{
         const list = await get('/v1/chat/conversations/list')
         console.log('list==',list)
-    }
 
-    const handleSelectText = (rowItem)=>{
-        console.log('rowItem:',rowItem,dailogDatas)
-        const list = datas?.map(item=>{
-            if(item.id == rowItem.id){
-                return {
-                    ...item,
-                    active:true
-                }
-            }else{
-                return {
-                    ...item,
-                    active:false
-                }
+        await dailogContent(list[0]?.id,type)
+
+        const listData = list?.map((item,index)=>{
+            return {
+                ...item,
+                active:index == 0 ? true : false
             }
         })
-        setDailogDatas(list)
+
+        setLeftDatas(listData)
+
+        const resOptions = await get('/v1/workgroups-with-workspaces')
+        const options = resOptions?.map(item=>{
+            return {
+                value:item.id,
+                label:item.name,
+            }
+        })
+
+        setSpaceoptions(options)
+        setDefaultValue(options[0]?.value)
+        setWorkspaceId(options[0]?.value)
+    }
+
+    const dailogContent = async(id,type)=>{
+        const dailog = await get(`/v1/chat/conversations/messages/${id}`)
+        console.log('dailog:',dailog)
+
+        if(['click','init'].includes(type)){
+            initContent = []
+            initRightContent = []
+            contentNum = []
+        }
+        
+        dailog?.map(item=>{
+            if(item.role == 'user'){
+                contentNum.push(item.id)
+                initRightContent.push(item.content)
+            }else{
+                initContent.push(item.content)
+            }
+        })
+
+        console.log('contentNum',contentNum,initRightContent,initContent)
+
+        setNums(contentNum)
+        setRightContent(initRightContent)
+        setContent(initContent)
+
+        const citations = []
+        
+        dailog.map(item=>{
+            if(item.role == 'assistant' && item.citations.length){
+                citations.push(...item.citations)
+            }
+        })
+
+        setCitations(citations)
+
+        const documents = await get(`/v1/documents/list`)
+
+        const documentInfo = []
+
+        citations.forEach((cit,ind)=>{
+            documents.forEach((doc)=>{
+                if(cit.document_id == doc.id){
+                    documentInfo.push({
+                        ...cit,
+                        document_name:doc.name,
+                        document_id:doc.id,
+                        active: ind == 0 ? true : false
+                    })
+                }
+            })
+        })
+
+        setDocuments(documentInfo)
+
+        setSourcesText(documentInfo[0].text)
+
+        console.log('documentInfo',citations,documentInfo)
+    }
+
+    const handleSelectSource = (doc)=>{
+        const list = documents?.map(item=>{
+            return {
+                ...item,
+                active:item.document_id == doc.document_id ? true : false
+            }
+        })
+
+        setDocuments(list)
+
+        const text = list?.filter(item=>item.active)[0]?.text
+
+        setSourcesText(text)
+
+    }
+
+    const handleCloseSources = ()=>{
+        setCitations([])
+    }
+
+    const handleSelectText = async(rowItem)=>{
+
+        await dailogContent(rowItem?.id,'click')
+
+        const list = leftDatas?.map(item=>{
+            return {
+                ...item,
+                active:item.id == rowItem.id ? true : false
+            }
+        })
+        setLeftDatas(list)
+
     }
 
     const handleOnChange = (e)=>{
@@ -73,44 +169,82 @@ export default function Chat(){
         console.log('res:',value)
         const params = {
             message:value,
-            use_rag: false
+            use_rag: useRag
         }
         const obj = {
             name:value,
-            workspace_id : 0
+            workspace_id:workspaceId
         }
-
 
         rightContent.push(value)
         setRightContent(rightContent)
-
-        setNums(contentNum)
 
         const res = await post('/v1/chat/conversations/create',obj)
         const list = await post(`/v1/chat/conversations/send-message?conversation_id=${res.workspace_id}`,params)
 
         content.push(list.content)
+
         contentNum.push(value)
 
         console.log('content:',content,rightContent)
+
+        setNums(contentNum)
 
         setContent(content)
 
         setValue('')
     }
 
+    const handleOnChangeSwich = (val)=>{
+        console.log('e00',val)
+        setUseRag(val)
+    }
+
+    const handleOnChangeSelect = (val)=>{
+        console.log('e11',val)
+        setWorkspaceId(val)
+    }
+
     return (
         <div className="chat-page">
-             <Row>
+             <div className="chat-row">
+                <div className={citations.length ? 'left1':'left1 width80'}>
+                    {
+                        leftDatas?.length && !citations.length &&
+                        <div className="left">
+                            <div className="history-list">
+                                {/* <div className="title height-52">
+                                    <div className="date">今天</div>
+                                    <div className="num">{}</div>
+                                </div> */}
+                                {
+                                    leftDatas?.map(item=>{
+                                        return (
+                                            <div key={item.id} onClick={()=>handleSelectText(item)} className={`height-52 ${item.active ? 'active' : '' }`}>{item.name}</div>
+                                        )
+                                    })
+                                }
+                            </div>
+                        </div> || null
+                    }
+                    <div className="right">
+                        <div className="head">
+                            <Switch onChange={handleOnChangeSwich} checkedChildren="开启" unCheckedChildren="自由聊天" defaultChecked />
+                            <Select 
+                                className="select-space"
+                                defaultValue="defaultValue"
+                                showSearch 
+                                placeholder="Select..."
+                                options={spaceoptions}
+                                onChange={handleOnChangeSelect}
+                            />
+                        </div>
 
-                <Col className="right" span={18} push={6}>
-                    <div className="contet">
-                        {console.log('rightContent',rightContent)}
-                    
-                        {
-                            (content?.length || rightContent?.length) && 
-                                nums.map((item,ind)=>(
-                                    <div>
+                        <div className="contet">
+                            {
+                                (content?.length || rightContent?.length) && 
+                                nums?.map((item,ind)=>(
+                                    <div key={ind}>
                                         <div className="right-align">
                                             <div className="text">{rightContent[ind]}</div>
                                             <div className="icon">
@@ -124,7 +258,7 @@ export default function Chat(){
                                                 <CustomerServiceOutlined style={{ fontSize: '22px', color: '#c30d23', width:'40px', height:'40px', lineHeight:'40px' }} />
                                             </div>
                                             <div className="dailog-content">
-                                                <div className="dailog-title">自由聊天</div> 
+                                                <div className="dailog-title">assistant</div> 
                                                 <div className="dailog-text" >
                                                     {content[ind]}
                                                 </div>
@@ -132,46 +266,55 @@ export default function Chat(){
                                         </div>
                                     </div>
                                 )) || null
-                            
-                        }
-                        
-                    </div>
-                    <div className="footer">
-                        {/* <div className="text">
-                            <div className="title">引用文本</div>
-                            <div className="quote-content">反洗钱和了解江河湖海</div>
-                            <CloseCircleOutlined  style={{color:'#fff'}}/>
-                        </div> */}
-                        <TextArea 
-                            bordered={false}
-                            placeholder="请输入..." 
-                            value={value}
-                            className="input-box"
-                            onChange={handleOnChange}
-                            >
-                        </TextArea>
-                        <SendOutlined onClick={handleSend} className="send" />
-                    </div>
-                </Col>
-                {
-                    leftDatas?.length && 
-                    <Col className="left" span={6} pull={18}>
-                    <div className="history-list">
-                        <div className="title height-52">
-                            <div className="date">今天</div>
-                            <div className="num">2</div>
+                            }
                         </div>
-                        {
-                            leftDatas?.map(item=>{
-                                return (
-                                    <div key={item.id} onClick={()=>handleSelectText(item)} className={`height-52 ${item.active ? 'active' : '' }`}>{item.text}</div>
-                                )
-                            })
-                        }
+
+                        <div className="footer">
+                            {/* <div className="text">
+                                <div className="title">引用文本</div>
+                                <div className="quote-content">反洗钱和了解江河湖海</div>
+                                <CloseCircleOutlined  style={{color:'#fff'}}/>
+                            </div> */}
+                            <TextArea 
+                                bordered={false}
+                                placeholder="请输入..." 
+                                value={value}
+                                className="input-box"
+                                onChange={handleOnChange}
+                                >
+                            </TextArea>
+                            <SendOutlined onClick={handleSend} className="send" />
+                        </div>
                     </div>
-                </Col> || null
+                </div>
+                {
+                 citations.length &&
+                 <div className="citations">
+                    <div className="head">
+                        <div className="icon-text">
+                            <MenuUnfoldOutlined style={{color:'#694747'}} />
+                            <span className="text">Sources</span>
+                        </div>
+                        <CloseOutlined onClick={handleCloseSources} className="icon" />
+                    </div>
+                    {
+                        <div className="sources-list">
+                            {
+                                documents?.map(doc=>(
+                                    <div className={doc.active ? 'list active' : 'list'} key={doc.document_name} onClick={()=>handleSelectSource(doc)}>  
+                                        <div>{doc.document_name}</div>
+                                    </div>
+                                ))
+                            }
+                            
+                        </div>
+                    }
+                    <div className="sources-content">
+                        {sourcesText}
+                    </div>
+                 </div> || null
                 }
-            </Row>
+            </div>
         </div>
     )
 }

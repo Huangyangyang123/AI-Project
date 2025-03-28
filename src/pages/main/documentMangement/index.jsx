@@ -11,6 +11,8 @@ const { Option } = Select;
 const { Dragger } = Upload;
 const { SHOW_PARENT } = TreeSelect;
 
+let ids = []
+
 const treeData = [
     {
       title: 'Node1',
@@ -76,10 +78,17 @@ export default function DocumentMangement(){
     const [isModalOpen,setIsModalOpen] = useState(false)
     const [opration,setOpration] = useState('')
 
+    const [treeData,setTreeData] = useState([])
+
+    const [document_id,setDocument_id] = useState([])
+
+    const [value, setValue] = useState([]);
+
     const [form] = Form.useForm();
 
     
     const handleCreat = ()=>{
+        setOpration('')
         setIsModalOpen(true)
     }
     
@@ -93,6 +102,25 @@ export default function DocumentMangement(){
         await initTableDatas()
         const datas = await get(`/v1/workgroups-with-workspaces`)
         console.log('datas==',datas)
+
+        let resDatas = []
+        
+        datas?.forEach(item=>{
+            if(item?.workspaces.length){
+                item?.workspaces.forEach(space=>{
+                    resDatas.push({
+                        title:space.name,
+                        value:space.id,
+                        key:space.id
+                    })
+                })
+            }
+        })
+
+        console.log('resDatas==',resDatas)
+
+        setTreeData(resDatas)
+
     },[])
 
     const initTableDatas = async()=>{
@@ -165,6 +193,8 @@ export default function DocumentMangement(){
         console.log('这是啥==',row,type)
         setOpration(type)
         if(type == 'link'){
+            setValue([])
+            setDocument_id([row.id])
             setIsModalOpen(true)
         }else{
             get(`/v1/documents/download/?document_id=${row.id}`)
@@ -195,11 +225,19 @@ export default function DocumentMangement(){
 
     const onFinish = (values)=>{
         console.log('Received values of form document: ', values);
+        const obj = {
+            workspace_ids:values.workspace_ids,
+            document_ids:document_id
+        }
+        post(`/v1/documents/link-workspaces`,obj)
+        message.success('关联成功')
+        initTableDatas()
     }
 
     const handleCancel = ()=>{
         setIsModalOpen(false)
     }
+
 
     const props = {
         name: 'file',
@@ -210,8 +248,11 @@ export default function DocumentMangement(){
             const fd = new FormData()
             fd.append('file',file)
             console.log('fd===',fd,file)
-            post('/v1/documents/upload',fd)
+            const uploadId = post('/v1/documents/upload',fd)
             message.success('上传成功')
+            initTableDatas()
+            ids.push(uploadId?.id)
+            setDocument_id(ids)
             return false
         },
         onDrop(e) {
@@ -219,9 +260,9 @@ export default function DocumentMangement(){
         },
     };
 
-    const [value, setValue] = useState(['0-0-0']);
+
     const onChange = (newValue) => {
-        console.log('onChange ', value);
+        console.log('onChange ', newValue);
         setValue(newValue);
     };
 

@@ -69,7 +69,7 @@ export default function DoMain(){
         
         const expendDatas = [...res].filter((item)=>{
             item.arr = [...tableChildrenDatas].filter((arr)=>{
-                return arr.id == item.id
+                return item.id == arr.group_id
             })
             if(item.arr.length == 0){
                 delete item.arr
@@ -104,7 +104,7 @@ export default function DoMain(){
         let url
         let data
         if(modalTitle == '新建'){
-            if(values.group_id == 1){
+            if(values.group_id == 0){
                 data = {
                     name: values.name,
                     description: values.description

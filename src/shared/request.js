@@ -30,7 +30,7 @@ const getContentDispositionInfo = (headers) => {
 
 const request = extend({
     prefix: REQUEST_PREFIX,
-    timeout: 60 * 1000,
+    timeout: 90 * 1000,
     getResponse: true,
     errorHandler: (error) => {
       const { response, name } = error
@@ -108,8 +108,8 @@ request.use(async (ctx,next)=>{
 
 // 中间件，统一过滤空字段
 request.use(async (ctx, next) => {
-    const { filterEmptyData = true, data } = ctx.req.options
-    if (filterEmptyData && data) {
+    const { Data = true, data } = ctx.req.options
+    if (Data && data) {
       const fullData = filterEmpty(data)
       if (Object.keys(fullData).length || getType(fullData) === 'formdata') {
         ctx.req.options.data = fullData

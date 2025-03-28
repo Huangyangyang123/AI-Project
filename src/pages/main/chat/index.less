@@ -1,41 +1,66 @@
 .chat-page{
     border-radius: 8px;
     font-family: PingFang SC;
-    .ant-row{
-        .left{
-            background: #fcf8f8;
-            border: 1px solid #f0e2e2;
-            .history-list{
-                padding: 10px;
-                .height-52{
-                    display: flex;
-                    justify-content: flex-start;
-                    align-items: center;
-                    height: 52px;
-                    font-weight: 400;
-                    font-size: 16px;
-                    color: #3b1e1e;
-                }
-                .active{
-                    border-right: 4px solid #c30d23;
-                }
-                .title{
-                    justify-content: space-between;
-                    .date{
-                        font-weight: 600;
-                        font-size: 14px;
+    .chat-row{
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+        .left1{
+            display: flex;
+            width: 100%;
+            .width80{
+                border-right: 1px solid #e1cbcb;
+            }
+            .left{
+                background: #fcf8f8;
+                border: 1px solid #f0e2e2;
+                // width: 100%;
+                .history-list{
+                    padding: 10px;
+                    .height-52{
+                        display: flex;
+                        justify-content: flex-start;
+                        align-items: center;
+                        height: 52px;
+                        width: 280px;
+                        font-weight: 400;
+                        font-size: 16px;
                         color: #3b1e1e;
                     }
-                    .date{
-                        font-family: Plus Jakarta Sans;
-                        font-weight: 500;
-                        font-size: 14px;
-                        color: #694747;
+                    .active{
+                        border-right: 4px solid #c30d23;
+                    }
+                    .title{
+                        justify-content: space-between;
+                        .date{
+                            font-weight: 600;
+                            font-size: 14px;
+                            color: #3b1e1e;
+                        }
+                        .date{
+                            font-family: Plus Jakarta Sans;
+                            font-weight: 500;
+                            font-size: 14px;
+                            color: #694747;
+                        }
                     }
                 }
             }
         }
+
         .right{
+            width: 100%;
+            .head{
+                padding: 10px;
+                .select-space{
+                    margin-left: 8px;
+                }
+                .ant-select-selector{
+                    border:none !important;
+                    background-color: #fcf8f8;
+                    border-radius: 99px;
+                }
+            }
             .contet{
                 max-height: 700px;
                 height: 600px;
@@ -103,7 +128,7 @@
                 border: 1px solid #e1cbcb;
                 border-radius: 8px;
                 box-shadow: 0px 2px 4px -2px #171717;
-                margin: 10px;
+                margin: 10px 10px 30px;
                 position: relative;
                 .text{
                     margin: 10px;
@@ -139,6 +164,55 @@
                     color: #c30d23;
                     font-size: 16px;
                 }
+            }
+        }
+        .citations{
+            width: 100%;
+            padding: 10px;
+            .head{
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                font-size: 16px;
+                font-weight: 700;
+                font-family: Plus Jakarta Sans;
+                color: #694747;
+                .text{
+                    margin-left: 5px;
+                }
+            }
+            .sources-list{
+                margin-top: 10px;
+                padding: 10px;
+                display: flex;
+                justify-content: space-between;
+                flex: 1;
+                border-bottom: 1px solid #fcf8f8;
+                .list{
+                    border: 1px solid #f0e2e2;
+                    border-radius: 16px;
+                    font-family: PingFang SC;
+                    font-weight: 500;
+                    font-size: 14px;
+                    color: #3b1e1e;
+                    min-width: 100px;
+                    min-height: 80px;
+                    width: 192px;
+                    height: 74px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    background-color: #fcf8f8;
+                    margin: 0 5px;
+                }
+                .active{
+                    border:1px solid #694747
+                }
+            }
+            .sources-content{
+                padding: 10px;
+                max-height: 600px;
+                overflow-y: scroll;
             }
         }
     }

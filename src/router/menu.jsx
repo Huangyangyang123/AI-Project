@@ -1,7 +1,7 @@
 import React from 'react'
 import { get } from '@/shared'
 
-import { AppstoreOutlined, DiffOutlined, WechatOutlined, BulbOutlined } from '@ant-design/icons';
+import { AppstoreOutlined, DiffOutlined, BgColorsOutlined, BulbOutlined } from '@ant-design/icons';
 
 export const icon = (iconEle) => (
   iconEle
@@ -42,7 +42,7 @@ export const menu = async () => {
     },
     {
       "id": "11187059925811202",
-      "name": "新增模版",
+      "name": "模版",
       "code": null,
       "ids": null,
       "menuIcon": <BulbOutlined />,
@@ -58,10 +58,10 @@ export const menu = async () => {
     },
     {
       "id": "11187059925811203",
-      "name": "自由聊天",
+      "name": "知识库",
       "code": null,
       "ids": null,
-      "menuIcon": <WechatOutlined />,
+      "menuIcon": <BgColorsOutlined />,
       "path": "/main/chat",
       "paths": null,
       "parentId": null,

@@ -1,75 +1,179 @@
 .template-chat-page{
     padding: 10px;
     border-radius: 8px;
-    display: flex;
-    justify-content: space-between;
     background: #f2f4f7 !important;
     font-family: PingFang SC;
-    .page-left{
-        width: 50%;
-        margin-right: 10px;
-        background: #fff;
-        border-radius: 4px;
-        .header{
-            .title{
-                background-color: #eef4ff;
+    .new-add-template{
+        display: flex;
+        .page-left{
+            width: 50%;
+            margin-right: 10px;
+            background: #fff;
+            border-radius: 4px;
+            .header{
+                .title{
+                    background-color: #eef4ff;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    height: 54px;
+                    padding: 10px;
+                    border-top-right-radius: 4px;
+                    border-top-left-radius: 4px;
+                }
+                .text{
+                    margin-left: 8px;
+                }
+                .input-box{
+                    margin: 10px 0;
+                }
+            }
+            .content{
+                padding: 10px;
+            }
+            .bottom{
+                background-color: #eaecf0;
+                padding: 10px;
+            }
+        }
+        .page-right{
+            background: #fff;
+            width: 50%;
+            padding: 10px;
+            border-radius: 4px;
+            .form-template{
+                .ant-row{
+                    display: initial !important;
+                }
+            }
+            .preview{
+                font-weight: 600;
+                font-size: 16px;
+                margin-bottom: 10px;
+            }
+            .input-text{
+                font-weight: 600;
+                font-size: 12px;
+            }
+            .tips{
+                font-weight: 400;
+                font-size: 12px;
+                margin-bottom: 10px;
+            }
+            .bottom{
                 display: flex;
                 justify-content: space-between;
-                align-items: center;
-                height: 54px;
-                padding: 10px;
-                border-top-right-radius: 4px;
-                border-top-left-radius: 4px;
             }
-            .text{
-                margin-left: 8px;
+            .result{
+                margin-top: 10px;
+                .text{
+                    padding: 10px;
+                    border: 1px solid #eaecf0;
+                    border-radius: 4px;
+                }
             }
-            .input-box{
-                margin: 10px 0;
-            }
-        }
-        .content{
-            padding: 10px;
-        }
-        .bottom{
-            background-color: #eaecf0;
-            padding: 10px;
         }
     }
-    .page-right{
-        background: #fff;
-        width: 50%;
-        padding: 10px;
-        border-radius: 4px;
+    .template-list{
+        display: flex;
         .form-template{
             .ant-row{
                 display: initial !important;
             }
         }
-        .preview{
-            font-weight: 600;
-            font-size: 16px;
-            margin-bottom: 10px;
-        }
-        .input-text{
-            font-weight: 600;
-            font-size: 12px;
-        }
-        .tips{
-            font-weight: 400;
-            font-size: 12px;
-            margin-bottom: 10px;
-        }
-        .bottom{
+        .left1{
             display: flex;
-            justify-content: space-between;
-        }
-        .result{
-            margin-top: 10px;
-            .text{
+            width: 100%;
+            .left{
+                background: #f0e2e2;
+                padding: 10px 0;
+                width: 40%;
+                .head{
+                    background: #ffeeee;
+                    display: inline-block;
+                    padding: 3px;
+                    margin-left: 10px;
+                }
+                .list{
+                    .title{
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        font-size: 14px;
+                        font-weight: 600;
+                        color: #3b1e1e;
+                        height: 52px;
+                        .text{
+                            padding-left: 10px;
+                        }
+                        .nums{
+                            font-size: 14px;
+                            font-weight: 500;
+                            color: #694747;
+                            padding-right: 10px;
+                            padding-left: 10px;
+                        }
+                    }
+                    .item{
+                        height: 46px;
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        padding-right: 10px;
+                        padding-left: 10px;
+                        font-size: 16px;
+                        font-weight: 400;
+                    }
+                    .active{
+                        border-right: 4px solid #c30d23;
+                        background-color: #ffeeee;
+                    }
+                }
+                .bottom{
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    .btn{
+                        border-radius: 8px;
+                        width: 100%;
+                        margin: 10px;
+                    }
+                }
+            }
+            .right{
                 padding: 10px;
-                border: 1px solid #eaecf0;
-                border-radius: 4px;
+                background: #fff;
+                width: 100%;
+                .head{
+                    display: flex;
+                    align-items: center;
+                    .text{
+                        height: 32px;
+                        line-height: 32px;
+                    }
+                    .box{
+                        background: #ffead5;
+                        border-radius: 8px;
+                        width: 32px;
+                        height: 32px;
+                        margin-right: 8px;
+                    }
+                }
+                .center-btn{
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                }
+            }
+        }
+        .right{
+            padding: 10px;
+            .content{
+                background: #fff;
+                min-width: 300px;
+                min-height: 200px;
+                border-radius: 8px;
+                padding: 10px;
             }
         }
     }

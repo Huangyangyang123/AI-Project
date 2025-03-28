@@ -43,7 +43,7 @@ const isEmpty = (val)=>{
 const filterEmpty = (data)=>{
   const type = getType(data)
   if (type === 'array') {
-    return data.map(() => filterEmpty(i))
+    return data.map((i) => filterEmpty(i))
   }
   if (type === 'object') {
     let res = {}
