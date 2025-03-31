@@ -138,11 +138,12 @@ export default function Chat(){
         console.log('documentInfo',citations,documentInfo)
     }
 
-    const handleSelectSource = (doc)=>{
-        const list = documents?.map(item=>{
+    const handleSelectSource = (doc,ind)=>{
+        const list = documents?.map((item,index)=>{
             return {
                 ...item,
-                active:item.document_id == doc.document_id ? true : false
+                active:index == ind ? true : false,
+                // active:item.document_id == doc.document_id ? true : false
             }
         })
 
@@ -336,8 +337,8 @@ export default function Chat(){
                     {
                         <div className="sources-list">
                             {
-                                documents?.map(doc=>(
-                                    <div className={doc.active ? 'list active' : 'list'} key={doc.document_name} onClick={()=>handleSelectSource(doc)}>  
+                                documents?.map((doc,ind)=>(
+                                    <div className={doc.active ? 'list active' : 'list'} key={ind} onClick={()=>handleSelectSource(doc,ind)}>  
                                         <div>{doc.document_name}</div>
                                     </div>
                                 ))
