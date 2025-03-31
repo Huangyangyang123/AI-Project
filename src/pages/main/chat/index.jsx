@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { Input, Switch, Select } from 'antd';
+import { Input, Switch, Select, message, Dropdown, Space } from 'antd';
 import { get, post } from '@/shared/request'
-import { SendOutlined, CustomerServiceOutlined, CopyOutlined, EditOutlined, MenuUnfoldOutlined, CloseOutlined } from '@ant-design/icons'
+import { SendOutlined, CustomerServiceOutlined, CopyOutlined, EditOutlined, MenuUnfoldOutlined, CloseOutlined, DownOutlined } from '@ant-design/icons'
 import './index.less'
 
 const { TextArea } = Input;
@@ -10,6 +10,12 @@ let initContent = []
 let initRightContent = []
 
 let contentNum = []
+const items = [
+    {
+        label: '引用',
+        key: '0',
+    },
+]
 
 export default function Chat(){
 
@@ -122,7 +128,12 @@ export default function Chat(){
 
         setDocuments(documentInfo)
 
-        setSourcesText(documentInfo[0].text)
+        if(!documentInfo[0]?.text){
+            // message('引用模版不存在～')
+            // return
+        }
+
+        setSourcesText(documentInfo[0]?.text)
 
         console.log('documentInfo',citations,documentInfo)
     }
@@ -176,21 +187,21 @@ export default function Chat(){
             workspace_id:workspaceId
         }
 
-        rightContent.push(value)
-        setRightContent(rightContent)
+        initRightContent.push(value)
+        setRightContent(initRightContent)
 
         const res = await post('/v1/chat/conversations/create',obj)
         const list = await post(`/v1/chat/conversations/send-message?conversation_id=${res.workspace_id}`,params)
 
-        content.push(list.content)
+        initContent.push(list.content)
 
         contentNum.push(value)
 
-        console.log('content:',content,rightContent)
+        console.log('content:',initContent,initRightContent)
 
         setNums(contentNum)
 
-        setContent(content)
+        setContent(initContent)
 
         setValue('')
     }
@@ -205,9 +216,25 @@ export default function Chat(){
         setWorkspaceId(val)
     }
 
+    const handleMenuClick = (e)=>{
+        console.log('val000')
+        e.preventDefault()
+    }
+
     return (
         <div className="chat-page">
              <div className="chat-row">
+
+                {/* <Dropdown menu={{items}} trigger={['click']} onClick={handleMenuClick}>
+                    <a onClick={(e) => e.preventDefault()}>
+                        <Space>
+                            Click me
+                            <DownOutlined />
+                        </Space>
+                    </a>
+                </Dropdown> */}
+
+
                 <div className={citations.length ? 'left1':'left1 width80'}>
                     {
                         leftDatas?.length && !citations.length &&
@@ -253,17 +280,26 @@ export default function Chat(){
                                             </div>
                                         </div> 
 
-                                        <div className="left-align">
-                                            <div className="avtar">
-                                                <CustomerServiceOutlined style={{ fontSize: '22px', color: '#c30d23', width:'40px', height:'40px', lineHeight:'40px' }} />
-                                            </div>
-                                            <div className="dailog-content">
-                                                <div className="dailog-title">assistant</div> 
-                                                <div className="dailog-text" >
-                                                    {content[ind]}
-                                                </div>
-                                            </div>
-                                        </div>
+                                        <div className="left-align" onClick={e => e.preventDefault()}>
+                                                {
+                                                    content[ind] && 
+                                                    <div className="avtar">
+                                                        <CustomerServiceOutlined style={{ fontSize: '22px', color: '#c30d23', width:'40px', height:'40px', lineHeight:'40px' }} />
+                                                    </div>
+                                                }
+                                                
+                                                {
+                                                    content[ind] && 
+                                                    <div className="dailog-content">
+                                                    <div className="dailog-title">assistant</div> 
+                                                    
+                                                        <div className="dailog-text" >
+                                                            {content[ind]}
+                                                        </div>
+                                                    
+                                                    </div>
+                                                }
+                                            </div>  
                                     </div>
                                 )) || null
                             }

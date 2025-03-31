@@ -201,9 +201,9 @@ export default function DocumentMangement(){
         }
     }
 
-    const delDocument = (row)=>{
+    const delDocument = async(row)=>{
         console.log('rowdata',row)
-        post(`/v1/documents/delete?document_id=${row.id}`)
+        await post(`/v1/documents/delete?document_id=${row.id}`)
         initTableDatas()
     }
 
@@ -243,15 +243,16 @@ export default function DocumentMangement(){
         name: 'file',
         multiple: true,
         action:'/v1/documents/upload',
-        beforeUpload(file, fileList){
+        async beforeUpload(file, fileList){
             console.log('file', file)
             const fd = new FormData()
             fd.append('file',file)
-            console.log('fd===',fd,file)
-            const uploadId = post('/v1/documents/upload',fd)
+            const uploadId = await post('/v1/documents/upload',fd)
             message.success('上传成功')
             initTableDatas()
             ids.push(uploadId?.id)
+
+            console.log('fd===',fd,ids)
             setDocument_id(ids)
             return false
         },
