@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Input, Switch, Select, message, Dropdown, Space } from 'antd';
 import { get, post } from '@/shared/request'
 import { SendOutlined, CustomerServiceOutlined, CopyOutlined, EditOutlined, MenuUnfoldOutlined, CloseOutlined, DownOutlined } from '@ant-design/icons'
+import TextDocumentViewer from '@/components/TextDocumentViewer';
 import './index.less'
 
 const { TextArea } = Input;
@@ -41,6 +42,71 @@ export default function Chat(){
 
     const [sourcesText,setSourcesText] = useState('')
 
+    // 获取对话详情
+    const getConversationDetail = async (conversationId) => {
+        try {
+            const response = await get(`/api/v1/conversations/${conversationId}`);
+            if (response.data) {
+                const { messages, documents } = response.data;
+                
+                // 更新消息列表
+                setMessageList(messages.map(msg => ({
+                    ...msg,
+                    citations: msg.citations || []
+                })));
+                
+                // 缓存文档信息
+                if (documents && documents.length > 0) {
+                    const docMap = new Map();
+                    documents.forEach(doc => {
+                        docMap.set(doc.id, doc);
+                    });
+                    setDocumentCache(docMap);
+                }
+            }
+        } catch (error) {
+            console.error('获取对话详情失败:', error);
+            message.error('获取对话详情失败');
+        }
+    };
+
+    // 添加文档缓存状态
+    const [documentCache, setDocumentCache] = useState(new Map());
+
+    // 修改处理引用点击的函数
+    const handleCitationClick = (citations) => {
+        if (!citations || citations.length === 0) {
+            console.warn('No citations provided');
+            return;
+        }
+        
+        console.log('Handling citations:', citations);
+        
+        // 使用缓存的文档信息
+        const citationDocuments = citations.map(citation => {
+            // 在当前文档列表中查找匹配的文档
+            const doc = documents.find(d => d.id === citation.document_id || d.document_id === citation.document_id);
+            if (!doc) {
+                console.warn('Document not found for citation:', citation);
+                return null;
+            }
+            return {
+                ...doc,
+                citation: citation,
+                document_id: doc.id || doc.document_id,  // 确保有 document_id
+                name: doc.name || doc.document_name || '未命名文档'
+            };
+        }).filter(Boolean);
+
+        console.log('Setting PDF documents:', citationDocuments);
+        
+        if (citationDocuments.length > 0) {
+            setRightContent('pdf');
+            setDocuments(citationDocuments);
+        } else {
+            message.warning('未找到相关文档');
+        }
+    };
 
     useEffect(()=>{
         initList()
@@ -75,68 +141,88 @@ export default function Chat(){
     }
 
     const dailogContent = async(id,type)=>{
-        const dailog = await get(`/v1/chat/conversations/messages/${id}`)
-        console.log('dailog:',dailog)
+        try {
+            console.log('Fetching dialog content for id:', id);
+            const dailog = await get(`/v1/chat/conversations/messages/${id}`)
+            console.log('Dialog response:', dailog)
 
-        if(['click','init'].includes(type)){
-            initContent = []
-            initRightContent = []
-            contentNum = []
-        }
-        
-        dailog?.map(item=>{
-            if(item.role == 'user'){
-                contentNum.push(item.id)
-                initRightContent.push(item.content)
-            }else{
-                initContent.push(item.content)
+            if(['click','init'].includes(type)){
+                initContent = []
+                initRightContent = []
+                contentNum = []
             }
-        })
-
-        console.log('contentNum',contentNum,initRightContent,initContent)
-
-        setNums(contentNum)
-        setRightContent(initRightContent)
-        setContent(initContent)
-
-        const citations = []
-        
-        dailog.map(item=>{
-            if(item.role == 'assistant' && item.citations.length){
-                citations.push(...item.citations)
-            }
-        })
-
-        setCitations(citations)
-
-        const documents = await get(`/v1/documents/list`)
-
-        const documentInfo = []
-
-        citations.forEach((cit,ind)=>{
-            documents.forEach((doc)=>{
-                if(cit.document_id == doc.id){
-                    documentInfo.push({
-                        ...cit,
-                        document_name:doc.name,
-                        document_id:doc.id,
-                        active: ind == 0 ? true : false
-                    })
+            
+            // 处理对话内容
+            dailog?.map(item=>{
+                if(item.role == 'user'){
+                    contentNum.push(item.id)
+                    initRightContent.push(item.content)
+                }else{
+                    initContent.push(item.content)
                 }
             })
-        })
 
-        setDocuments(documentInfo)
+            setNums(contentNum)
+            setRightContent(initRightContent)
+            setContent(initContent)
 
-        if(!documentInfo[0]?.text){
-            // message('引用模版不存在～')
-            // return
+            // 收集引用信息
+            const citations = []
+            dailog.map(item=>{
+                if(item.role == 'assistant' && item.citations?.length){
+                    console.log('Found citations in message:', item.citations);
+                    citations.push(...item.citations)
+                }
+            })
+
+            console.log('Total collected citations:', citations.length);
+            setCitations(citations)
+
+            if (citations.length === 0) {
+                console.log('No citations found in the dialog');
+                setDocuments([]);
+                return;
+            }
+
+            // 获取文档列表
+            console.log('Fetching document list');
+            try {
+                const response = await get('/v1/documents/list');
+                console.log('Raw documents response:', response);
+                
+                // 处理文档列表
+                const documentList = Array.isArray(response) ? response : [];
+                console.log('Document list:', documentList);
+
+                const documents = citations.map(citation => {
+                    const doc = documentList.find(d => d.id === citation.document_id);
+                    if (!doc) {
+                        console.warn('Document not found for citation:', citation);
+                        return null;
+                    }
+                    return {
+                        ...doc,
+                        citation: citation,
+                        document_id: doc.id,  // 确保有 document_id
+                        name: doc.name || doc.document_name || '未命名文档'
+                    };
+                }).filter(Boolean);  // 移除 null 值
+
+                console.log('Citations found:', citations);
+                console.log('Document list:', documentList);
+                console.log('Processed documents with citations:', documents);
+                setDocuments(documents);
+
+            } catch (error) {
+                console.error('Error fetching documents:', error);
+                message.error('获取文档列表失败');
+            }
+
+        } catch (error) {
+            console.error('Error in dailogContent:', error);
+            message.error('获取对话内容失败');
         }
-
-        setSourcesText(documentInfo[0]?.text)
-
-        console.log('documentInfo',citations,documentInfo)
-    }
+    };
 
     const handleSelectSource = (doc)=>{
         const list = documents?.map(item=>{
@@ -159,17 +245,21 @@ export default function Chat(){
     }
 
     const handleSelectText = async(rowItem)=>{
-
-        await dailogContent(rowItem?.id,'click')
-
-        const list = leftDatas?.map(item=>{
-            return {
+        console.log('Selected conversation:', rowItem);
+        
+        try {
+            await dailogContent(rowItem?.id,'click');
+            
+            const list = leftDatas?.map(item=>({
                 ...item,
-                active:item.id == rowItem.id ? true : false
-            }
-        })
-        setLeftDatas(list)
-
+                active: item.id === rowItem.id
+            }));
+            setLeftDatas(list);
+            
+        } catch (error) {
+            console.error('Error selecting conversation:', error);
+            message.error('加载对话失败');
+        }
     }
 
     const handleOnChange = (e)=>{
@@ -179,30 +269,30 @@ export default function Chat(){
     const handleSend = async()=>{
         console.log('res:',value)
         const params = {
-            message:value,
+            message: value,
             use_rag: useRag
         }
-        const obj = {
-            name:value,
-            workspace_id:workspaceId
+        
+        // 修改创建工作区的参数
+        const workspaceData = {
+            name: value,
+            description: value,  // 可以用消息内容作为描述
+            group_id: 1  // 默认使用第一个工作组，你可能需要从其他地方获取正确的 group_id
         }
 
         initRightContent.push(value)
         setRightContent(initRightContent)
 
-        const res = await post('/v1/chat/conversations/create',obj)
-        const list = await post(`/v1/chat/conversations/send-message?conversation_id=${res.workspace_id}`,params)
+        const res = await post('/v1/workspaces/create', workspaceData)
+        const list = await post(`/v1/chat/conversations/send-message?conversation_id=${res.id}`, params)
 
         initContent.push(list.content)
-
         contentNum.push(value)
 
-        console.log('content:',initContent,initRightContent)
+        console.log('content:', initContent, initRightContent)
 
         setNums(contentNum)
-
         setContent(initContent)
-
         setValue('')
     }
 
@@ -324,31 +414,23 @@ export default function Chat(){
                     </div>
                 </div>
                 {
-                 citations.length &&
-                 <div className="citations">
-                    <div className="head">
-                        <div className="icon-text">
-                            <MenuUnfoldOutlined style={{color:'#694747'}} />
-                            <span className="text">Sources</span>
-                        </div>
-                        <CloseOutlined onClick={handleCloseSources} className="icon" />
-                    </div>
-                    {
-                        <div className="sources-list">
-                            {
-                                documents?.map(doc=>(
-                                    <div className={doc.active ? 'list active' : 'list'} key={doc.document_name} onClick={()=>handleSelectSource(doc)}>  
-                                        <div>{doc.document_name}</div>
-                                    </div>
-                                ))
-                            }
-                            
-                        </div>
-                    }
-                    <div className="sources-content">
-                        {sourcesText}
-                    </div>
-                 </div> || null
+                    citations.length > 0 && documents.length > 0 &&
+                    <div className="citations">
+                        <TextDocumentViewer 
+                            documents={documents.map(doc => ({
+                                ...doc,
+                                id: doc.id || doc.document_id,  // 确保有 id
+                                document_id: doc.id || doc.document_id,  // 确保有 document_id
+                                name: doc.name || doc.document_name || '未命名文档',
+                                citation: doc.citation || null
+                            }))} 
+                            onClose={() => {
+                                setCitations([]);
+                                setDocuments([]);
+                                setRightContent(initRightContent);
+                            }} 
+                        />
+                    </div> || null
                 }
             </div>
         </div>
