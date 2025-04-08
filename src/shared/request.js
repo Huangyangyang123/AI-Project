@@ -69,12 +69,15 @@ request.use(async (ctx, next) => {
 // 中间件，文件下载，统一处理返回数据
 request.use(async (ctx,next)=>{
     if (ctx.req.url.indexOf('/file/uploadfile') != -1) {
-        ctx.req.options.timeout = 900 * 1000
-      }
-      const { downloadFile } = ctx.req.options
-      if (downloadFile) {
-        ctx.req.options.responseType = 'blob'
-      }
+      
+      ctx.req.options.timeout = 900 * 1000
+    }
+    const { downloadFile, fileName } = ctx.req.options
+    console.log('ctx.req.options', ctx.req.options)
+    if (downloadFile) {
+      ctx.req.options.responseType = 'blob'
+    }
+
     await next()
     const { req, res } = ctx
 
@@ -82,7 +85,7 @@ request.use(async (ctx,next)=>{
 
     const cd = getContentDispositionInfo(response.headers)
     if ('attachment' in cd) {
-        return downloadFileFromBlob(data, cd.filename)
+      return downloadFileFromBlob(data, fileName)
     }
     let errorData
     if (downloadFile) {

@@ -13,14 +13,14 @@ import { toLogin } from '@/shared'
  * @returns 
  */
 const downloadFileFromBlob = (data, filename = '')=>{
-  if (!data) return
-  const url = URL.createObjectURL(new Blob([data]))
-  const link = document.createElement('a')
-  link.style.display = 'none'
-  link.href = url
-  link.download = filename || `${+new Date()}`
-  link.click()
-  URL.revokeObjectURL(url)
+  const blob = new Blob([data], { type: 'application/pdf' });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${filename}`;
+  a.click();
+  window.URL.revokeObjectURL(url);
+  a.remove();
 }
 /**
  * 

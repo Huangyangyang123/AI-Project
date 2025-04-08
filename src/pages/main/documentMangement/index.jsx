@@ -189,7 +189,7 @@ export default function DocumentMangement(){
         }
     ]
 
-    const handleOprator = (row,type)=>{
+    const handleOprator = async(row,type)=>{
         console.log('这是啥==',row,type)
         setOpration(type)
         if(type == 'link'){
@@ -197,7 +197,7 @@ export default function DocumentMangement(){
             setDocument_id([row.id])
             setIsModalOpen(true)
         }else{
-            get(`/v1/documents/download/?document_id=${row.id}`)
+            get(`/v1/documents/download/${row.id}`,{},{downloadFile:true,fileName:row.name})
         }
     }
 

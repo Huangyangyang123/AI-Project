@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Input, Switch, Select, message, Dropdown, Space } from 'antd';
 import { get, post } from '@/shared/request'
 import { SendOutlined, CustomerServiceOutlined, CopyOutlined, EditOutlined, MenuUnfoldOutlined, CloseOutlined, DownOutlined } from '@ant-design/icons'
-import TextDocumentViewer from '@/components/TextDocumentViewer';
+import TextDocumentViewer from '@/components/PDFViewer';
 import './index.less'
 
 const { TextArea } = Input;
@@ -116,16 +116,17 @@ export default function Chat(){
         const list = await get('/v1/chat/conversations/list')
         console.log('list==',list)
 
-        await dailogContent(list[0]?.id,type)
-
-        const listData = list?.map((item,index)=>{
-            return {
-                ...item,
-                active:index == 0 ? true : false
-            }
-        })
-
-        setLeftDatas(listData)
+        if(list[0]?.id){
+            await dailogContent(list[0]?.id,type)
+            const listData = list?.map((item,index)=>{
+                return {
+                    ...item,
+                    active:index == 0 ? true : false
+                }
+            })
+    
+            setLeftDatas(listData)
+        }
 
         const resOptions = await get('/v1/workgroups-with-workspaces')
         const options = resOptions?.map(item=>{
@@ -248,13 +249,15 @@ export default function Chat(){
         console.log('Selected conversation:', rowItem);
         
         try {
-            await dailogContent(rowItem?.id,'click');
-            
-            const list = leftDatas?.map(item=>({
-                ...item,
-                active: item.id === rowItem.id
-            }));
-            setLeftDatas(list);
+            if(rowItem?.id){
+                await dailogContent(rowItem?.id,'click');
+                
+                const list = leftDatas?.map(item=>({
+                    ...item,
+                    active: item.id === rowItem.id
+                }));
+                setLeftDatas(list);
+            }
             
         } catch (error) {
             console.error('Error selecting conversation:', error);
@@ -268,23 +271,21 @@ export default function Chat(){
 
     const handleSend = async()=>{
         console.log('res:',value)
+
         const params = {
-            message: value,
+            message:value,
             use_rag: useRag
         }
-        
-        // 修改创建工作区的参数
-        const workspaceData = {
-            name: value,
-            description: value,  // 可以用消息内容作为描述
-            group_id: 1  // 默认使用第一个工作组，你可能需要从其他地方获取正确的 group_id
+        const obj = {
+            name:value,
+            workspace_id:workspaceId
         }
 
         initRightContent.push(value)
         setRightContent(initRightContent)
 
-        const res = await post('/v1/workspaces/create', workspaceData)
-        const list = await post(`/v1/chat/conversations/send-message?conversation_id=${res.id}`, params)
+        const res = await post('/v1/chat/conversations/create', obj)
+        const list = await post(`/v1/chat/conversations/send-message?conversation_id=${res.workspace_id}`, params)
 
         initContent.push(list.content)
         contentNum.push(value)
@@ -383,9 +384,7 @@ export default function Chat(){
                                                     <div className="dailog-content">
                                                     <div className="dailog-title">assistant</div> 
                                                     
-                                                        <div className="dailog-text" >
-                                                            {content[ind]}
-                                                        </div>
+                                                        <div className="dailog-text" dangerouslySetInnerHTML={{__html:content[ind]}} />
                                                     
                                                     </div>
                                                 }
