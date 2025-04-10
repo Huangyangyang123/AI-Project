@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { get, post } from '@/shared/request'
 import { Spin, Button, message } from 'antd';
 import { LeftOutlined, RightOutlined, ZoomInOutlined, ZoomOutOutlined, MenuUnfoldOutlined, CloseOutlined } from '@ant-design/icons';
 import './index.less';
@@ -18,23 +19,21 @@ if (!pdfjsLib) {
  * @param {Object} props.citation 引用信息，包含页码和坐标
  * @param {function} props.onClose 关闭回调
  */
-const PDFViewer = ({ documents, onClose }) => {
-  console.log('PDFViewer received documents:', documents);
+const PDFViewer = ({ documents, onClose, handleSelectSource }) => {
   
-  // 确保 documents 数组不为空
+  // 确保 documents 数组不为空 元素已经渲染
   if (!documents || documents.length === 0) {
     console.warn('No documents provided to PDFViewer');
     return null;
   }
 
   const [activeDoc, setActiveDoc] = useState(documents[0]);
-  console.log('Initial activeDoc set to:', documents[0]);
 
   const pdfContainerRef = useRef(null);
   const [pdfDoc, setPdfDoc] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
-  const [scale, setScale] = useState(1.2);
+  const [scale, setScale] = useState(1.0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
@@ -49,138 +48,128 @@ const PDFViewer = ({ documents, onClose }) => {
   };
 
   // 加载PDF文档
-  useEffect(() => {
-    const loadPDF = async () => {
-      if (!activeDoc) {
-        console.warn('No active document available');
-        return;
+  useEffect(async() => {
+    await loadPDF();
+    // await renderPage(currentPage);
+    return cleanup;
+  }, [activeDoc]);
+
+  const loadPDF = async()=>{
+    if (!activeDoc) {
+      console.warn('No active document available');
+      return;
+    }
+    const docId = activeDoc.id || activeDoc.document_id;
+    if (!docId) {
+      console.warn('No document ID found in active document:', activeDoc);
+      return;
+    }
+    
+    setLoading(true);
+    cleanup();
+    try {
+      // 设置PDF.js工作线程
+      if (pdfjsLib && !pdfjsLib.GlobalWorkerOptions.workerSrc) {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = '//cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
       }
 
-      const docId = activeDoc.id || activeDoc.document_id;
-      console.log('loadPDF called with activeDoc:', activeDoc);
-      console.log('Document ID for loading:', docId);
+      // const file = await get(`/v1/documents/download/${docId}`)
       
-      if (!docId) {
-        console.warn('No document ID found in active document:', activeDoc);
-        return;
-      }
-      
-      setLoading(true);
-      cleanup();
-      
-      try {
-        // 设置PDF.js工作线程
-        if (pdfjsLib && !pdfjsLib.GlobalWorkerOptions.workerSrc) {
-          pdfjsLib.GlobalWorkerOptions.workerSrc = '//cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
-        }
-        
-        console.log('Loading document:', { docId, activeDoc });
-        
-        // 从API获取PDF文件
-        const response = await fetch(`/api/v1/documents/download/${docId}`, {
+      // 从API获取PDF文件
+      const response = await fetch(`/api/v1/documents/download/${docId}`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/pdf',
+        },
+      });
+
+      if (!response.ok) {
+
+        // 尝试备用 API
+        const fallbackResponse = await fetch(`/api/v1/documents/${docId}/content`, {
           method: 'GET',
           headers: {
             'Accept': 'application/pdf',
           },
         });
 
-        if (!response.ok) {
-          console.error('Download failed:', {
-            status: response.status,
-            statusText: response.statusText,
-            headers: Object.fromEntries(response.headers.entries())
-          });
-
-          // 尝试备用 API
-          const fallbackResponse = await fetch(`/api/v1/documents/${docId}/content`, {
-            method: 'GET',
-            headers: {
-              'Accept': 'application/pdf',
-            },
-          });
-
-          if (!fallbackResponse.ok) {
-            throw new Error(`获取PDF文件失败: ${response.statusText}`);
-          }
-
-          const contentType = fallbackResponse.headers.get('content-type');
-          console.log('Content type:', contentType);
-          
-          if (contentType && contentType.includes('application/pdf')) {
-            const pdfData = await fallbackResponse.arrayBuffer();
-            console.log('PDF data size:', pdfData.byteLength);
-            
-            // 加载PDF文档
-            const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
-            setPdfDoc(pdf);
-            setTotalPages(pdf.numPages);
-            
-            // 如果有引用信息，跳转到对应页面
-            if (activeDoc.citation?.page_number) {
-              setCurrentPage(activeDoc.citation.page_number);
-            } else {
-              setCurrentPage(1);
-            }
-          } else {
-            // 如果不是PDF，显示文本内容
-            const textContent = await fallbackResponse.text();
-            console.log('Received text content:', textContent.substring(0, 100));
-            setError('文档不是PDF格式，显示文本内容：');
-            activeDoc.text = textContent;
-          }
-        } else {
-          const contentType = response.headers.get('content-type');
-          console.log('Content type:', contentType);
-          
-          if (contentType && contentType.includes('application/pdf')) {
-            const pdfData = await response.arrayBuffer();
-            console.log('PDF data size:', pdfData.byteLength);
-            
-            // 加载PDF文档
-            const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
-            setPdfDoc(pdf);
-            setTotalPages(pdf.numPages);
-            
-            // 如果有引用信息，跳转到对应页面
-            if (activeDoc.citation?.page_number) {
-              setCurrentPage(activeDoc.citation.page_number);
-            } else {
-              setCurrentPage(1);
-            }
-          } else {
-            // 如果不是PDF，显示文本内容
-            const textContent = await response.text();
-            console.log('Received text content:', textContent.substring(0, 100));
-            setError('文档不是PDF格式，显示文本内容：');
-            activeDoc.text = textContent;
-          }
+        if (!fallbackResponse.ok) {
+          throw new Error(`获取PDF文件失败: ${response.statusText}`);
         }
-      } catch (err) {
-        console.error('加载PDF文件失败:', err);
-        setError(err.message);
-        message.error(`无法加载PDF: ${err.message}`);
-      } finally {
-        setLoading(false);
+
+        const contentType = fallbackResponse.headers.get('content-type');
+        
+        if (contentType && contentType.includes('application/pdf')) {
+          const pdfData = await fallbackResponse.arrayBuffer();
+          console.log('PDF data size:', pdfData.byteLength);
+          
+          // 加载PDF文档
+          const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
+          setPdfDoc(pdf);
+          setTotalPages(pdf.numPages);
+          
+          // 如果有引用信息，跳转到对应页面
+          if (activeDoc.citation?.page_number) {
+            setCurrentPage(activeDoc.citation.page_number);
+          } else {
+            setCurrentPage(1);
+          }
+
+        } else {
+          // 如果不是PDF，显示文本内容
+          const textContent = await fallbackResponse.text();
+          console.log('Received text content:', textContent.substring(0, 100));
+          setError('文档不是PDF格式，显示文本内容：');
+          activeDoc.text = textContent;
+        }
+      } else {
+        const contentType = response.headers.get('content-type');
+        
+        if (contentType && contentType.includes('application/pdf')) {
+          const pdfData = await response.arrayBuffer();
+          console.log('PDF data size:', pdfData.byteLength);
+          
+          // 加载PDF文档
+          const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
+          setPdfDoc(pdf);
+          setTotalPages(pdf.numPages);
+          
+          // 如果有引用信息，跳转到对应页面
+          if (activeDoc.citation?.page_number) {
+            setCurrentPage(activeDoc.citation.page_number);
+          } else {
+            setCurrentPage(1);
+          }
+
+          if(!pdf || !activeDoc.citation.page_number) return
+          
+          renderPage(activeDoc.citation.page_number,pdf);
+          
+        } else {
+          // 如果不是PDF，显示文本内容
+          const textContent = await response.text();
+          console.log('Received text content:', textContent.substring(0, 100));
+          setError('文档不是PDF格式，显示文本内容：');
+          activeDoc.text = textContent;
+        }
       }
-    };
-    
-    loadPDF();
-    return cleanup;
-  }, [activeDoc]);
+    } catch (err) {
+      console.error('加载PDF文件失败:', err);
+      setError(err.message);
+      message.error(`无法加载PDF: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   // 高亮引用的位置
-  const highlightCitation = async (citation, pageNumber) => {
-    console.log('Attempting to highlight citation:', {
-      citation,
-      pageNumber
-    });
+  const highlightCitation = async (citation, pageNumber,pdf = null) => {
 
     try {
       if (!citation || !pageNumber) {
         console.warn('Invalid citation or page number:', { citation, pageNumber });
         return;
       }
-
       // 验证 bbox 坐标是否存在且为数字
       const requiredFields = ['bbox_x', 'bbox_y', 'bbox_width', 'bbox_height'];
       const missingFields = requiredFields.filter(field => 
@@ -188,16 +177,15 @@ const PDFViewer = ({ documents, onClose }) => {
       );
       
       if (missingFields.length > 0) {
-        console.warn('Missing or invalid bbox fields:', {
-          missingFields,
-          citation
-        });
         return;
       }
 
       // Get the PDF page
-      const page = await pdfDoc.getPage(pageNumber);
-      const viewport = page.getViewport({ scale });
+
+      const initPdfDoc = pdfDoc || pdf;
+
+      const page = await initPdfDoc?.getPage(pageNumber);
+      const viewport = await page?.getViewport({ scale });
 
       // Get the canvas for the current page
       const canvas = document.querySelector(`[data-page-number="${pageNumber}"]`);
@@ -212,10 +200,9 @@ const PDFViewer = ({ documents, onClose }) => {
       // Get the canvas context and draw highlight
       const ctx = canvas.getContext('2d');
       ctx.save();
-      
       // 设置高亮样式
-      ctx.fillStyle = 'rgba(255, 255, 0, 0.35)';  // 半透明黄色
-      ctx.strokeStyle = 'rgba(255, 165, 0, 0.9)';  // 橙色边框
+
+      ctx.fillStyle = 'rgba(255, 244, 244, 0.5)';  // 半透明粉色
       ctx.lineWidth = 2;
 
       // 计算坐标
@@ -245,14 +232,26 @@ const PDFViewer = ({ documents, onClose }) => {
       });
 
       // 绘制高亮矩形
-      ctx.fillRect(scaledX, scaledY, scaledWidth, scaledHeight);
-      ctx.strokeRect(scaledX, scaledY, scaledWidth, scaledHeight);
+      ctx.fillRect(scaledX - 6, scaledY - 6, scaledWidth + 12, scaledHeight + 12);
+      // ctx.strokeRect(scaledX, scaledY, scaledWidth, scaledHeight);
+
+
+      // 绘制一个从上至下的 左边线 作为左边框
+      ctx.strokeStyle = 'rgba(195,13,35,1)';
+      ctx.lineWidth = 3;
+
+      // 开始绘制路径
+      ctx.beginPath();
+      ctx.moveTo(scaledX - 6, scaledY - 6); // 起点（左上角）
+      ctx.lineTo(scaledX - 6, (scaledY + scaledHeight) + 6); // 终点（左下角）
+      ctx.stroke();
+
 
       // 添加文本标注（用于调试）
-      ctx.fillStyle = 'rgba(255, 0, 0, 0.8)';  // 红色文本
-      ctx.font = '14px Arial';
-      const debugText = `${citation.text || 'No text'} (${Math.round(scaledX)},${Math.round(scaledY)})`;
-      ctx.fillText(debugText, scaledX, Math.max(scaledY - 5, 15));  // 确保文本不会超出顶部
+      // ctx.fillStyle = 'rgba(255, 0, 0, 0.8)';  // 红色文本
+      // ctx.font = '14px Arial';
+      // const debugText = `${citation.text || 'No text'} (${Math.round(scaledX)},${Math.round(scaledY)})`;
+      // ctx.fillText(debugText, scaledX, Math.max(scaledY - 5, 15));  // 确保文本不会超出顶部
 
       ctx.restore();
 
@@ -262,12 +261,16 @@ const PDFViewer = ({ documents, onClose }) => {
   };
 
   // 渲染PDF页面
-  const renderPage = async (pageNumber) => {
+  const renderPage = async (pageNumber,pdf = null) => {
+    
     try {
-      if (!pdfDoc) return;
+
+      const initPdfDoc = pdfDoc || pdf;
+
+      if (!initPdfDoc) return;
 
       // Get the PDF page
-      const page = await pdfDoc.getPage(pageNumber);
+      const page = await initPdfDoc?.getPage(pageNumber)
       const viewport = page.getViewport({ scale });
 
       // Create canvas element
@@ -335,24 +338,13 @@ const PDFViewer = ({ documents, onClose }) => {
           return acc;
         }, {});
 
-        console.log('Document citations before dedup:', {
-          docId: doc.id || doc.document_id,
-          citationsCount: citations.length,
-          uniqueCount: Object.keys(uniqueCitations).length,
-          citations: citations,
-          unique: Object.values(uniqueCitations)
-        });
-
         return Object.values(uniqueCitations);
       });
-
-      console.log('All citations for page', pageNumber, ':', pageCitations);
 
       // 高亮所有引用
       if (pageCitations.length > 0) {
         setTimeout(() => {
           const processedCoords = new Set(); // 用于跟踪已处理的坐标
-          
           pageCitations.forEach(citation => {
             if (citation && typeof citation.bbox_x === 'number') {
               // 创建唯一坐标标识
@@ -360,24 +352,17 @@ const PDFViewer = ({ documents, onClose }) => {
               
               if (!processedCoords.has(coordKey)) {
                 processedCoords.add(coordKey);
-                console.log('Processing unique citation:', {
-                  coordKey,
-                  citation
-                });
-                highlightCitation(citation, pageNumber);
+                highlightCitation(citation, pageNumber,pdf);
               } else {
                 console.log('Skipping duplicate citation coordinates:', {
                   coordKey,
                   citation
                 });
               }
-            } else {
-              console.warn('Invalid citation format:', citation);
             }
           });
         }, 0);
       }
-
     } catch (error) {
       console.error('Error rendering page:', error);
       setError(`Error rendering page ${pageNumber}: ${error.message}`);
@@ -385,11 +370,10 @@ const PDFViewer = ({ documents, onClose }) => {
   };
 
   // 当页码或缩放比例变化时渲染PDF
-  useEffect(() => {
+  useEffect(async() => {
     if (!pdfDoc || !currentPage) return;
-    
     cleanup();
-    renderPage(currentPage);
+    // renderPage(currentPage);
   }, [pdfDoc, currentPage, scale, activeDoc?.citation]);
   
   // 上一页
@@ -416,7 +400,8 @@ const PDFViewer = ({ documents, onClose }) => {
     setScale(prevScale => Math.max(prevScale - 0.2, 0.5)); // 最小缩小到0.5倍
   };
 
-  const handleDocumentClick = (doc) => {
+  const handleDocumentClick = (doc,ind) => {
+    handleSelectSource(doc,ind)
     setActiveDoc(doc);
   };
 
@@ -424,13 +409,13 @@ const PDFViewer = ({ documents, onClose }) => {
   const renderDocumentItem = (doc, index) => {
     const docId = doc.id || doc.document_id;
     const docName = doc.name || doc.document_name || `Document ${index + 1}`;
-    const activeDocId = activeDoc?.id || activeDoc?.document_id;
+    // const activeDocId = activeDoc?.id || activeDoc?.document_id;
     
     return (
       <div
         key={`${docId}-${index}`}
-        className={`document-item ${docId === activeDocId ? 'active' : ''}`}
-        onClick={() => handleDocumentClick(doc)}
+        className={`document-item ${doc.active ? 'active' : ''}`}
+        onClick={() => handleDocumentClick(doc,index)}
       >
         <div className="document-name">{docName}</div>
         {doc.citation && (
@@ -453,26 +438,8 @@ const PDFViewer = ({ documents, onClose }) => {
       </div>
 
       <div className="content">
-        <div className="document-list">
-          {documents.map(renderDocumentItem)}
-        </div>
 
-        <div className="pdf-container">
-          {loading && <div className="pdf-loading"><Spin tip="加载中..." /></div>}
-          {error && (
-            <div className="pdf-error">
-              <div className="error-message">{error}</div>
-              {activeDoc?.text && (
-                <div className="text-content">
-                  <pre>{activeDoc.text}</pre>
-                </div>
-              )}
-            </div>
-          )}
-          <div ref={pdfContainerRef} className="pdf-container-inner" />
-        </div>
-
-        {pdfDoc && (
+      {pdfDoc && (
           <div className="pdf-toolbar">
             <div className="pdf-nav">
               <Button 
@@ -502,6 +469,26 @@ const PDFViewer = ({ documents, onClose }) => {
             </div>
           </div>
         )}
+
+
+        <div className="document-list">
+          {documents.map(renderDocumentItem)}
+        </div>
+
+        <div className="pdf-container">
+          {loading && <div className="pdf-loading"><Spin tip="加载中..." /></div>}
+          {error && (
+            <div className="pdf-error">
+              <div className="error-message">{error}</div>
+              {activeDoc?.text && (
+                <div className="text-content">
+                  <pre>{activeDoc.text}</pre>
+                </div>
+              )}
+            </div>
+          )}
+          <div ref={pdfContainerRef} className="pdf-container-inner" />
+        </div>
       </div>
     </div>
   );

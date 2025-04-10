@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Input, Switch, Select, message, Dropdown, Space } from 'antd';
 import { get, post } from '@/shared/request'
-import { SendOutlined, CustomerServiceOutlined, CopyOutlined, EditOutlined, MenuUnfoldOutlined, CloseOutlined, DownOutlined } from '@ant-design/icons'
+import { SendOutlined, CustomerServiceOutlined, CopyOutlined, EditOutlined, FileSearchOutlined, CloseOutlined, DownOutlined } from '@ant-design/icons'
 import TextDocumentViewer from '@/components/PDFViewer';
 import './index.less'
 
@@ -41,6 +41,8 @@ export default function Chat(){
     const [documents,setDocuments] = useState([])
 
     const [sourcesText,setSourcesText] = useState('')
+
+    const [sourcesList,setSourcesList] = useState(false)
 
     // 获取对话详情
     const getConversationDetail = async (conversationId) => {
@@ -94,7 +96,8 @@ export default function Chat(){
                 ...doc,
                 citation: citation,
                 document_id: doc.id || doc.document_id,  // 确保有 document_id
-                name: doc.name || doc.document_name || '未命名文档'
+                name: doc.name || doc.document_name || '未命名文档',
+                active: ind == 0 ? true : false
             };
         }).filter(Boolean);
 
@@ -180,7 +183,6 @@ export default function Chat(){
             setCitations(citations)
 
             if (citations.length === 0) {
-                console.log('No citations found in the dialog');
                 setDocuments([]);
                 return;
             }
@@ -195,7 +197,7 @@ export default function Chat(){
                 const documentList = Array.isArray(response) ? response : [];
                 console.log('Document list:', documentList);
 
-                const documents = citations.map(citation => {
+                const documents = citations.map((citation,ind) => {
                     const doc = documentList.find(d => d.id === citation.document_id);
                     if (!doc) {
                         console.warn('Document not found for citation:', citation);
@@ -203,15 +205,12 @@ export default function Chat(){
                     }
                     return {
                         ...doc,
+                        active: ind == 0 ? true : false,
                         citation: citation,
                         document_id: doc.id,  // 确保有 document_id
                         name: doc.name || doc.document_name || '未命名文档'
                     };
                 }).filter(Boolean);  // 移除 null 值
-
-                console.log('Citations found:', citations);
-                console.log('Document list:', documentList);
-                console.log('Processed documents with citations:', documents);
                 setDocuments(documents);
 
             } catch (error) {
@@ -225,11 +224,16 @@ export default function Chat(){
         }
     };
 
-    const handleSelectSource = (doc)=>{
-        const list = documents?.map(item=>{
+    const handleExpendSources = ()=>{
+        setSourcesList(true)
+    }
+
+    const handleSelectSource = (doc,ind)=>{
+        const list = documents?.map((item,index)=>{
             return {
                 ...item,
-                active:item.document_id == doc.document_id ? true : false
+                active:index == ind ? true : false,
+                // active:item.document_id == doc.document_id ? true : false
             }
         })
 
@@ -328,7 +332,7 @@ export default function Chat(){
 
                 <div className={citations.length ? 'left1':'left1 width80'}>
                     {
-                        leftDatas?.length && !citations.length &&
+                        leftDatas?.length && !sourcesList &&
                         <div className="left">
                             <div className="history-list">
                                 {/* <div className="title height-52">
@@ -384,7 +388,14 @@ export default function Chat(){
                                                     <div className="dailog-content">
                                                     <div className="dailog-title">assistant</div> 
                                                     
-                                                        <div className="dailog-text" dangerouslySetInnerHTML={{__html:content[ind]}} />
+                                                    <div className="dailog-text" dangerouslySetInnerHTML={{__html:content[ind]}} />
+                                                    {
+                                                        citations.length > 0 && documents.length > 0 &&
+                                                        <div className="icon">
+                                                            <CopyOutlined />
+                                                            <FileSearchOutlined onClick={handleExpendSources} />
+                                                        </div> || null
+                                                    }
                                                     
                                                     </div>
                                                 }
@@ -413,9 +424,10 @@ export default function Chat(){
                     </div>
                 </div>
                 {
-                    citations.length > 0 && documents.length > 0 &&
+                    sourcesList &&
                     <div className="citations">
-                        <TextDocumentViewer 
+                        <TextDocumentViewer
+                            handleSelectSource={handleSelectSource}
                             documents={documents.map(doc => ({
                                 ...doc,
                                 id: doc.id || doc.document_id,  // 确保有 id
@@ -427,6 +439,7 @@ export default function Chat(){
                                 setCitations([]);
                                 setDocuments([]);
                                 setRightContent(initRightContent);
+                                setSourcesList(false)
                             }} 
                         />
                     </div> || null

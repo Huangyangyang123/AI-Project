@@ -6,44 +6,40 @@
     flex-direction: column;
 
     .chat-row {
-        flex: 1;
         display: flex;
-        overflow: hidden;
-
+        width: 100%;
         .left1 {
-            flex: 1;
             display: flex;
             overflow: hidden;
-
+            width: 100%;
             &.width80 {
-                width: 80%;
+                // width: 80%;
+                border-right: 1px solid #e1cbcb;
             }
         }
 
         .left {
-            width: 280px;
-            border-right: 1px solid #E1CBCB;
+            background: #fcf8f8;
+            border: 1px solid #f0e2e2;
             overflow-y: auto;
 
             .history-list {
                 padding: 12px;
 
                 .height-52 {
+                    display: flex;
+                    justify-content: flex-start;
+                    align-items: center;
                     height: 52px;
-                    line-height: 52px;
-                    padding: 0 12px;
-                    cursor: pointer;
-                    border-radius: 8px;
-                    color: #694747;
+                    width: 280px;
+                    font-weight: 400;
                     font-size: 16px;
-
+                    color: #3b1e1e;
                     &:hover {
                         background: #FCF8F8;
                     }
-
                     &.active {
-                        background: #FFF4F4;
-                        border: 2px solid #C30D23;
+                        border-right: 4px solid #c30d23;
                     }
                 }
             }
@@ -77,11 +73,9 @@
 
                 .right-align {
                     display: flex;
-                    justify-content: flex-end;
-                    align-items: flex-start;
-                    gap: 8px;
+                    flex-direction: column;
                     margin-bottom: 16px;
-
+                    align-items: end;
                     .text {
                         background: #FCF8F8;
                         padding: 12px;
@@ -143,6 +137,22 @@
                             color: #694747;
                             font-size: 16px;
                             line-height: 1.5;
+                        }
+                        .icon {
+                            display: flex;
+                            gap: 4px;
+                            // padding-left: 60px;
+                            color: #4E5969;
+                            justify-content: flex-end;
+    
+                            .anticon {
+                                cursor: pointer;
+                                padding: 5px 16px;
+    
+                                &:hover {
+                                    color: #694747;
+                                }
+                            }
                         }
                     }
                 }
@@ -206,9 +216,11 @@
         }
 
         .citations {
-            width: 400px;
-            border-left: 1px solid #E1CBCB;
-            overflow: hidden;
+            // width: 400px;
+            // border-left: 1px solid #E1CBCB;
+            // overflow: hidden;
+            width: 50%;
+            padding: 10px;
         }
     }
 }
