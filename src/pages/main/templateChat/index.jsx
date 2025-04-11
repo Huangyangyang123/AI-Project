@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { Form, Input, Table, Button, Tabs } from 'antd';
-import { StarOutlined, CaretRightOutlined } from '@ant-design/icons'
+import { Form, Input, Table, Button, Tabs, Switch, message, Modal } from 'antd';
+import { StarOutlined, CaretRightOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons'
 import { get, post } from '@/shared/request'
 import './index.less'
 
@@ -23,6 +23,7 @@ const items = [
 
 export default function TemplateChat(){
     const [form] = Form.useForm();
+    const [varForm] = Form.useForm();
     const [value,setValue] = useState('')
     const [tableInitList,setTableInitList] = useState([])
 
@@ -44,6 +45,10 @@ export default function TemplateChat(){
 
     const [templateId,setTemplateId] = useState(1)
 
+    const [tempId,setTempId] = useState()
+
+    const [showAddVariable,setShowAddVariable] = useState(false)
+
     useEffect(async()=>{
         await getTemplateList()
     },[])
@@ -62,6 +67,7 @@ export default function TemplateChat(){
 
         setTemplateForm(res[0]?.variables)
         setNames(names)
+        form.setFieldsValue({})
 
         console.log(res[0]?.variables,'variables')
     }
@@ -82,7 +88,6 @@ export default function TemplateChat(){
         setNames(datas)
 
         const detailsRes = await get(`/v1/templates/detail/${data.id}`)
-        console.log('detailsRes',detailsRes)
 
         setTemplateForm(detailsRes?.variables)
 
@@ -115,7 +120,53 @@ export default function TemplateChat(){
         setTableInitList(res.variables)
 
         setFormDatas(res.variables)
+
+        setTempId(res.id)
         
+    }
+
+    const handleVariable = async()=>{
+        varForm.resetFields()
+        setShowAddVariable(true)
+    }
+
+    const submitVarible = async(val)=>{
+        console.log('submitVarible',val)
+        await varForm.validateFields()
+        onFinishVarible(varForm.getFieldsValue(true),val)
+    }
+    const handleCancel = ()=>{
+        setShowAddVariable(false)
+        varForm.resetFields()
+    }
+    const onFinishVaribleForm = async(values)=>{
+        console.log('Received values:',values)
+        setShowAddVariable(false)
+    }
+    const onFinishVarible = async(values)=>{
+        console.log('Received values:',values)
+
+        if(!tempId){
+            message.error('请先生成模版')
+            setShowAddVariable(false)
+            return
+        }
+
+        const obj = {
+            operation:'add',
+            variable:{
+                name:values.name,
+                description:values.description,
+                required:values.required || false,
+            }
+        }
+
+        const res = await post(`/v1/templates/${tempId}/variables`,obj)
+        console.log('res==,res',res)
+        message.success('添加成功')
+        setShowAddVariable(false)
+        setTableInitList(res?.variables)
+        setFormDatas(res.variables)
     }
 
     const columns = [
@@ -132,8 +183,54 @@ export default function TemplateChat(){
             render:(row)=>{
                 return row
             }
+        },
+        {
+            title:'可选',
+            dataIndex:'required',
+            key:'required',
+            render:(row)=>{
+                return (
+                    <div className="btns">
+                        <Switch checked={row.required} disabled onChange={handleChangeSelect} />
+                    </div>
+                )
+            }
+        },
+        {
+            title:'操作',
+            render:(row)=>{
+                return (
+                    <div className="btns">
+                        {/* <SettingOutlined style={{ fontSize: '16px' }} /> */}
+                        <DeleteOutlined style={{ fontSize: '16px' }} onClick={()=>handleDelAttr(row)} />
+                    </div>
+                )
+            }
         }
     ]
+
+    const handleDelAttr = async(row)=>{
+        console.log('handleDelAttr',row)
+        
+        const obj = {
+            operation:'remove',
+            variable:{
+                name:row.name,
+                description:row.description,
+                required:row.required,
+            }
+        }
+
+        const res = await post(`/v1/templates/${tempId}/variables`,obj)
+        console.log('res==,res',res)
+        message.success('删除成功')
+        setTableInitList(res?.variables)
+        setFormDatas(res.variables)
+    }
+
+    const handleChangeSelect = (val)=>{
+        console.log('handleChangeSelect',val)
+    }
 
     const onFinish = async(values)=>{
         console.log('Received values:',values)
@@ -158,9 +255,56 @@ export default function TemplateChat(){
         onFinish(form.getFieldsValue(true),val)
     }
 
+    const handleBack = async(val)=>{
+        setTemplateList(true)
+        setValue('')
+        setGeneratedContent(null)
+        getTemplateList()
+    }
+
     const handleNewTepmlateGenrator = async(val)=>{
         await form.validateFields()
         onFinishTemplate(form.getFieldsValue(true),val)
+    }
+
+    const addModel = ()=>{
+        return (
+            <Modal
+                title='添加变量'
+                open={showAddVariable} 
+                onOk={submitVarible.bind(this,true)} 
+                onCancel={handleCancel}
+                maskClosable={false}
+            >
+                <Form
+                    form={varForm}
+                    name="addVaribleForm"
+                    onFinish={onFinishVaribleForm}
+                    scrollToFirstError
+                >
+                    <Form.Item 
+                        name="name"
+                        label="变量key"
+                        rules={[{ required: true, message: '请输入变量key!' }]}
+                    >
+                        <Input />
+                    </Form.Item>
+                    <Form.Item 
+                        name="description"
+                        label="描述"
+                        rules={[{ required: true, message: '请输入描述!' }]}
+                    >
+                        <Input />
+                    </Form.Item>
+                    <Form.Item 
+                        name="required"
+                        label="是否可选"
+                    >
+                        <Switch />
+                    </Form.Item>
+                </Form>
+            </Modal>
+        )
     }
 
     return (
@@ -183,12 +327,22 @@ export default function TemplateChat(){
                                     bordered={false}
                                     placeholder="请输入..." 
                                     value={value}
+                                    autoSize={{
+                                        minRows:4,
+                                        maxRows:6
+                                    }}
                                     onChange={handleOnChange}
                                     >
                                 </TextArea>
                             </div>
                         </div>
                         <div className="content">
+                            <div className="add-btn">
+                                <Button type="primary" shape="round" onClick={handleVariable}>
+                                    <PlusOutlined style={{fontSize:'16px'}} />
+                                    添加
+                                </Button>
+                            </div>
                             <Table 
                                 columns={columns}
                                 rowKey='name'
@@ -215,6 +369,7 @@ export default function TemplateChat(){
                                         key={ind}
                                         name={item.name}
                                         label={item.description}
+                                        rules={[{ required: item.required, message: `请输入${item.description}!` }]}
                                     >
                                         <Input />
                                     </Form.Item>
@@ -225,6 +380,7 @@ export default function TemplateChat(){
                         <div className="bottom">
                             <Button shape="round">清空</Button>
                             <Button shape="round" onClick={handleGenrator.bind(this,true)} type="primary" icon={<CaretRightOutlined style={{color:'#fff'}} />}>运行</Button>
+                            <Button shape="round" type="primary" onClick={handleBack.bind(this,true)} >发布</Button>
                         </div>
 
                         <div className="result">
@@ -299,6 +455,10 @@ export default function TemplateChat(){
                         <div className="content" dangerouslySetInnerHTML={{__html:contentRes}}></div>
                     </div>
                 </div>
+            }
+
+            {
+                addModel()
             }
 
         </div>
